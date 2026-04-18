@@ -9,8 +9,18 @@ export type RouteRate = {
   flatPrice: number;
   maxVolumeM3: number;
   eta: string;
+  vehicleId: string;
   vehicle: string;
   note: string;
+};
+
+export type VehicleRecord = {
+  id: string;
+  name: string;
+  plateNumber: string;
+  vehicleType: string;
+  capacityM3: number;
+  status: string;
 };
 
 export type DriverRecord = {
@@ -29,6 +39,16 @@ export type DriverRecord = {
   password?: string;
 };
 
+export type ShipmentItemInput = {
+  itemName: string;
+  quantity: number;
+  lengthCm: number;
+  widthCm: number;
+  heightCm: number;
+  volumeM3: number;
+  note: string;
+};
+
 export type ShipmentRecord = {
   trackingNumber: string;
   customer: string;
@@ -37,8 +57,14 @@ export type ShipmentRecord = {
   status: string;
   driverId: string;
   driverName: string;
+  vehicleId: string;
   vehicle: string;
   eta: string;
+  shipDate: string;
+  recipientName: string;
+  recipientPhone: string;
+  recipientAddress: string;
+  routeId: string;
   currentLocation: string;
   currentLocationLabel: string;
   mapNote: string;
@@ -46,6 +72,7 @@ export type ShipmentRecord = {
   lastSeenAt: string | null;
   lastLatitude: number | null;
   lastLongitude: number | null;
+  items: ShipmentItemInput[];
 };
 
 type SiteSettings = {
@@ -79,6 +106,28 @@ type DriverRow = {
   last_accuracy: number | null;
 };
 
+type VehicleRow = {
+  id: string;
+  name: string;
+  plate_number: string | null;
+  vehicle_type: string | null;
+  capacity_m3: number | null;
+  status: string | null;
+};
+
+type RouteRateRow = {
+  id: string;
+  origin: string;
+  destination: string;
+  item_type: string;
+  flat_price: number;
+  max_volume_m3: number;
+  eta: string;
+  vehicle_id: string | null;
+  vehicle_name: string | null;
+  note: string | null;
+};
+
 type ShipmentRow = {
   tracking_number: string;
   customer: string;
@@ -87,10 +136,27 @@ type ShipmentRow = {
   status: string;
   driver_id: string | null;
   driver: string | null;
+  vehicle_id: string | null;
   vehicle: string | null;
   eta: string | null;
+  ship_date: string | null;
+  recipient_name: string | null;
+  recipient_phone: string | null;
+  recipient_address: string | null;
+  route_id: string | null;
   current_location_label: string | null;
   map_note: string | null;
+};
+
+type ShipmentItemRow = {
+  shipment_tracking_number: string;
+  item_name: string;
+  quantity: number | null;
+  length_cm: number | null;
+  width_cm: number | null;
+  height_cm: number | null;
+  volume_m3: number | null;
+  note: string | null;
 };
 
 const defaultSiteSettings: SiteSettings = {
@@ -115,6 +181,7 @@ const state = reactive({
   source: isSupabaseConfigured ? "supabase" : "unconfigured",
   siteSettings: { ...defaultSiteSettings } as SiteSettings,
   routeRates: [] as RouteRate[],
+  vehicles: [] as VehicleRecord[],
   drivers: [] as DriverRecord[],
   shipments: [] as ShipmentRecord[]
 });
@@ -132,15 +199,26 @@ function formatDriverLocation(driver?: Partial<DriverRecord> | null, fallback?: 
   return fallback?.trim() || "Menunggu update lokasi driver";
 }
 
+function mapVehicleRow(vehicle: VehicleRow): VehicleRecord {
+  return {
+    id: String(vehicle.id),
+    name: compactText(vehicle.name, "Armada"),
+    plateNumber: compactText(vehicle.plate_number, "-"),
+    vehicleType: compactText(vehicle.vehicle_type, "-"),
+    capacityM3: Number(vehicle.capacity_m3 ?? 0),
+    status: compactText(vehicle.status, "Aktif")
+  };
+}
+
 function mapDriverRow(driver: DriverRow): DriverRecord {
   return {
     id: String(driver.id),
-    name: driver.name,
-    phone: driver.phone ?? "-",
-    status: driver.status ?? "Standby",
-    primaryVehicle: driver.primary_vehicle ?? "-",
-    activeTrips: driver.active_trips ?? 0,
-    route: driver.route ?? "-",
+    name: compactText(driver.name, "Driver"),
+    phone: compactText(driver.phone, "-"),
+    status: compactText(driver.status, "Standby"),
+    primaryVehicle: compactText(driver.primary_vehicle, "-"),
+    activeTrips: Number(driver.active_trips ?? 0),
+    route: compactText(driver.route, "-"),
     isTracking: driver.is_tracking ?? false,
     lastSeenAt: driver.last_seen_at,
     lastLatitude: driver.last_latitude,
@@ -149,32 +227,70 @@ function mapDriverRow(driver: DriverRow): DriverRecord {
   };
 }
 
-function mapShipmentRow(shipment: ShipmentRow, driverMap: Map<string, DriverRecord>): ShipmentRecord {
+function mapRouteRow(route: RouteRateRow, vehicleMap: Map<string, VehicleRecord>): RouteRate {
+  const mappedVehicle = route.vehicle_id ? vehicleMap.get(String(route.vehicle_id)) : undefined;
+  return {
+    id: String(route.id),
+    origin: compactText(route.origin, "-"),
+    destination: compactText(route.destination, "-"),
+    itemType: compactText(route.item_type, "-"),
+    flatPrice: Number(route.flat_price ?? 0),
+    maxVolumeM3: Number(route.max_volume_m3 ?? 0),
+    eta: compactText(route.eta, "-"),
+    vehicleId: route.vehicle_id ? String(route.vehicle_id) : mappedVehicle?.id ?? "",
+    vehicle: compactText(route.vehicle_name, mappedVehicle?.name ?? "Armada belum dipilih"),
+    note: String(route.note ?? "")
+  };
+}
+
+function mapShipmentRow(
+  shipment: ShipmentRow,
+  driverMap: Map<string, DriverRecord>,
+  shipmentItems: ShipmentItemInput[]
+): ShipmentRecord {
   const driver = shipment.driver_id ? driverMap.get(String(shipment.driver_id)) : undefined;
-  const vehicle = shipment.vehicle ?? driver?.primaryVehicle ?? "-";
   const currentLocation = driver?.lastLatitude != null && driver.lastLongitude != null
     ? formatDriverLocation(driver, shipment.current_location_label)
-    : shipment.current_location_label?.trim() || "Driver belum mengirim lokasi";
+    : compactText(shipment.current_location_label, "Driver belum mengirim lokasi");
 
   return {
     trackingNumber: shipment.tracking_number,
-    customer: shipment.customer,
-    item: shipment.item,
-    destination: shipment.destination,
-    status: shipment.status,
+    customer: compactText(shipment.customer, "-"),
+    item: compactText(shipment.item, shipmentItems.length ? `${shipmentItems.length} barang` : "-"),
+    destination: compactText(shipment.destination, "-"),
+    status: compactText(shipment.status, "Pickup Dijadwalkan"),
     driverId: shipment.driver_id ? String(shipment.driver_id) : driver?.id ?? "",
-    driverName: driver?.name ?? shipment.driver ?? "Belum ditentukan",
-    vehicle,
-    eta: shipment.eta ?? "-",
+    driverName: driver?.name ?? compactText(shipment.driver, "Belum ditentukan"),
+    vehicleId: shipment.vehicle_id ? String(shipment.vehicle_id) : "",
+    vehicle: compactText(shipment.vehicle, "-"),
+    eta: compactText(shipment.eta, "-"),
+    shipDate: compactText(shipment.ship_date, "-"),
+    recipientName: compactText(shipment.recipient_name, "-"),
+    recipientPhone: compactText(shipment.recipient_phone, "-"),
+    recipientAddress: compactText(shipment.recipient_address, "-"),
+    routeId: shipment.route_id ? String(shipment.route_id) : "",
     currentLocation,
-    currentLocationLabel: shipment.current_location_label?.trim() || currentLocation,
+    currentLocationLabel: compactText(shipment.current_location_label, currentLocation),
     mapNote: driver?.lastLatitude != null && driver.lastLongitude != null
       ? "Posisi live diambil dari aplikasi driver."
-      : (shipment.map_note ?? "Menunggu titik lokasi pertama dari aplikasi driver."),
+      : compactText(shipment.map_note, "Menunggu titik lokasi pertama dari aplikasi driver."),
     isTracking: driver?.isTracking ?? false,
     lastSeenAt: driver?.lastSeenAt ?? null,
     lastLatitude: driver?.lastLatitude ?? null,
-    lastLongitude: driver?.lastLongitude ?? null
+    lastLongitude: driver?.lastLongitude ?? null,
+    items: shipmentItems
+  };
+}
+
+function mapShipmentItemRow(item: ShipmentItemRow): ShipmentItemInput {
+  return {
+    itemName: compactText(item.item_name, "Barang"),
+    quantity: Number(item.quantity ?? 1),
+    lengthCm: Number(item.length_cm ?? 0),
+    widthCm: Number(item.width_cm ?? 0),
+    heightCm: Number(item.height_cm ?? 0),
+    volumeM3: Number(item.volume_m3 ?? 0),
+    note: String(item.note ?? "")
   };
 }
 
@@ -198,32 +314,23 @@ function applySiteSettings(row: Record<string, unknown> | null) {
   };
 }
 
-function applyRouteRates(rows: Record<string, unknown>[] | null) {
-  if (!rows?.length) return;
-
-  state.routeRates = rows.map((route) => ({
-    id: String(route.id),
-    origin: String(route.origin),
-    destination: String(route.destination),
-    itemType: String(route.item_type),
-    flatPrice: Number(route.flat_price ?? 0),
-    maxVolumeM3: Number(route.max_volume_m3 ?? 0),
-    eta: String(route.eta ?? "-"),
-    vehicle: String(route.vehicle ?? "-"),
-    note: String(route.note ?? "")
-  }));
-}
-
 async function loadPublicData() {
   if (!isSupabaseConfigured || !supabase) return false;
 
-  const [settingsRes, routesRes] = await Promise.all([
+  const [settingsRes, routesRes, vehiclesRes] = await Promise.all([
     supabase.from("site_settings").select("*").limit(1).maybeSingle(),
-    supabase.from("route_rates").select("*").order("destination")
+    supabase.from("route_rates").select("*").order("destination"),
+    supabase.from("vehicles").select("*").order("name")
   ]);
 
   applySiteSettings(settingsRes.data as Record<string, unknown> | null);
-  applyRouteRates(routesRes.data as Record<string, unknown>[] | null);
+
+  const vehicleRows = (vehiclesRes.data ?? []) as VehicleRow[];
+  state.vehicles = vehicleRows.map(mapVehicleRow);
+  const vehicleMap = new Map(state.vehicles.map((vehicle) => [vehicle.id, vehicle]));
+
+  const routeRows = (routesRes.data ?? []) as RouteRateRow[];
+  state.routeRates = routeRows.map((route) => mapRouteRow(route, vehicleMap));
   state.source = "supabase";
   return true;
 }
@@ -231,22 +338,40 @@ async function loadPublicData() {
 async function loadAdminData() {
   if (!isSupabaseConfigured || !supabase) return false;
 
-  const [settingsRes, routesRes, driversRes, shipmentsRes] = await Promise.all([
+  const [settingsRes, vehiclesRes, routesRes, driversRes, shipmentsRes, shipmentItemsRes] = await Promise.all([
     supabase.from("site_settings").select("*").limit(1).maybeSingle(),
+    supabase.from("vehicles").select("*").order("name"),
     supabase.from("route_rates").select("*").order("destination"),
     supabase.from("drivers").select("*").order("name"),
-    supabase.from("shipments").select("*").order("tracking_number", { ascending: false })
+    supabase.from("shipments").select("*").order("tracking_number", { ascending: false }),
+    supabase.from("shipment_items").select("*").order("created_at", { ascending: true })
   ]);
 
   applySiteSettings(settingsRes.data as Record<string, unknown> | null);
-  applyRouteRates(routesRes.data as Record<string, unknown>[] | null);
+
+  const vehicleRows = (vehiclesRes.data ?? []) as VehicleRow[];
+  state.vehicles = vehicleRows.map(mapVehicleRow);
+  const vehicleMap = new Map(state.vehicles.map((vehicle) => [vehicle.id, vehicle]));
+
+  const routeRows = (routesRes.data ?? []) as RouteRateRow[];
+  state.routeRates = routeRows.map((route) => mapRouteRow(route, vehicleMap));
 
   const driverRows = (driversRes.data ?? []) as DriverRow[];
   state.drivers = driverRows.map(mapDriverRow);
   const driverMap = new Map(state.drivers.map((driver) => [driver.id, driver]));
 
+  const shipmentItemsByTracking = new Map<string, ShipmentItemInput[]>();
+  ((shipmentItemsRes.data ?? []) as ShipmentItemRow[]).forEach((item) => {
+    const tracking = String(item.shipment_tracking_number);
+    const existing = shipmentItemsByTracking.get(tracking) ?? [];
+    existing.push(mapShipmentItemRow(item));
+    shipmentItemsByTracking.set(tracking, existing);
+  });
+
   const shipmentRows = (shipmentsRes.data ?? []) as ShipmentRow[];
-  state.shipments = shipmentRows.map((shipment) => mapShipmentRow(shipment, driverMap));
+  state.shipments = shipmentRows.map((shipment) =>
+    mapShipmentRow(shipment, driverMap, shipmentItemsByTracking.get(shipment.tracking_number) ?? [])
+  );
   state.source = "supabase";
   return true;
 }
@@ -283,7 +408,13 @@ export async function fetchPublicTrackingByCode(trackingNumber: string): Promise
     }
   }
 
-  return mapShipmentRow(shipmentRow, driverMap);
+  const itemsRes = await supabase
+    .from("shipment_items")
+    .select("*")
+    .eq("shipment_tracking_number", normalizedTracking)
+    .order("created_at", { ascending: true });
+
+  return mapShipmentRow(shipmentRow, driverMap, ((itemsRes.data ?? []) as ShipmentItemRow[]).map(mapShipmentItemRow));
 }
 
 export async function initializePublicStore(force = false) {
@@ -336,6 +467,23 @@ export async function refreshOpsStore() {
   }
 }
 
+async function upsertVehicleRemote(vehicle: VehicleRecord) {
+  if (!supabase || !isSupabaseConfigured) return;
+  await supabase.from("vehicles").upsert({
+    id: vehicle.id,
+    name: vehicle.name,
+    plate_number: vehicle.plateNumber,
+    vehicle_type: vehicle.vehicleType,
+    capacity_m3: vehicle.capacityM3,
+    status: vehicle.status
+  });
+}
+
+async function deleteVehicleRemote(id: string) {
+  if (!supabase || !isSupabaseConfigured) return;
+  await supabase.from("vehicles").delete().eq("id", id);
+}
+
 async function upsertRouteRateRemote(route: RouteRate) {
   if (!supabase || !isSupabaseConfigured) return;
   await supabase.from("route_rates").upsert({
@@ -346,7 +494,8 @@ async function upsertRouteRateRemote(route: RouteRate) {
     flat_price: route.flatPrice,
     max_volume_m3: route.maxVolumeM3,
     eta: route.eta,
-    vehicle: route.vehicle,
+    vehicle_id: route.vehicleId || null,
+    vehicle_name: route.vehicle,
     note: route.note
   });
 }
@@ -388,6 +537,7 @@ async function deleteDriverRemote(id: string) {
 
 async function insertShipmentRemote(shipment: ShipmentRecord) {
   if (!supabase || !isSupabaseConfigured) return;
+
   await supabase.from("shipments").insert({
     tracking_number: compactText(shipment.trackingNumber, shipment.trackingNumber),
     customer: compactText(shipment.customer, "-"),
@@ -396,11 +546,32 @@ async function insertShipmentRemote(shipment: ShipmentRecord) {
     status: compactText(shipment.status, "Pickup Dijadwalkan"),
     driver_id: shipment.driverId || null,
     driver: compactText(shipment.driverName, "Belum ditentukan"),
+    vehicle_id: shipment.vehicleId || null,
     vehicle: compactText(shipment.vehicle, "-"),
     eta: compactText(shipment.eta, "-"),
+    ship_date: compactText(shipment.shipDate, "-"),
+    recipient_name: compactText(shipment.recipientName, "-"),
+    recipient_phone: compactText(shipment.recipientPhone, "-"),
+    recipient_address: compactText(shipment.recipientAddress, "-"),
+    route_id: shipment.routeId || null,
     current_location_label: compactText(shipment.currentLocationLabel, "Menunggu pickup driver"),
     map_note: compactText(shipment.mapNote, "Menunggu titik lokasi pertama dari aplikasi driver.")
   });
+
+  if (shipment.items.length) {
+    await supabase.from("shipment_items").insert(
+      shipment.items.map((item) => ({
+        shipment_tracking_number: shipment.trackingNumber,
+        item_name: compactText(item.itemName, "Barang"),
+        quantity: Math.max(1, item.quantity),
+        length_cm: Math.max(0, item.lengthCm),
+        width_cm: Math.max(0, item.widthCm),
+        height_cm: Math.max(0, item.heightCm),
+        volume_m3: item.volumeM3,
+        note: item.note
+      }))
+    );
+  }
 }
 
 async function upsertSiteSettingsRemote(settings: SiteSettings) {
@@ -426,17 +597,34 @@ async function upsertSiteSettingsRemote(settings: SiteSettings) {
 export function useOpsStore() {
   const shipmentCount = computed(() => state.shipments.length);
   const activeDriverCount = computed(() => state.drivers.filter((driver) => driver.status === "On Duty" || driver.isTracking).length);
+  const vehicleCount = computed(() => state.vehicles.length);
+
+  async function saveVehicle(vehicle: VehicleRecord) {
+    const index = state.vehicles.findIndex((entry) => entry.id === vehicle.id);
+    if (index >= 0) state.vehicles[index] = vehicle;
+    else state.vehicles.unshift(vehicle);
+    await upsertVehicleRemote(vehicle);
+    await refreshOpsStore();
+  }
+
+  async function deleteVehicle(id: string) {
+    state.vehicles = state.vehicles.filter((entry) => entry.id !== id) as typeof state.vehicles;
+    await deleteVehicleRemote(id);
+    await refreshOpsStore();
+  }
 
   async function saveRouteRate(route: RouteRate) {
     const index = state.routeRates.findIndex((entry) => entry.id === route.id);
     if (index >= 0) state.routeRates[index] = route;
     else state.routeRates.unshift(route);
     await upsertRouteRateRemote(route);
+    await refreshOpsStore();
   }
 
   async function deleteRouteRate(id: string) {
     state.routeRates = state.routeRates.filter((entry) => entry.id !== id) as typeof state.routeRates;
     await deleteRouteRateRemote(id);
+    await refreshOpsStore();
   }
 
   async function saveDriver(driver: DriverRecord) {
@@ -469,6 +657,9 @@ export function useOpsStore() {
     state,
     shipmentCount,
     activeDriverCount,
+    vehicleCount,
+    saveVehicle,
+    deleteVehicle,
     saveRouteRate,
     deleteRouteRate,
     saveDriver,
