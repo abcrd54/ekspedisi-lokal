@@ -154,8 +154,7 @@ function mapShipmentRow(shipment: ShipmentRow, driverMap: Map<string, DriverReco
   const vehicle = shipment.vehicle ?? driver?.primaryVehicle ?? "-";
   const currentLocation = driver?.lastLatitude != null && driver.lastLongitude != null
     ? formatDriverLocation(driver, shipment.current_location_label)
-    : shipment.current_location_label?.trim()
-        || "Driver belum mengirim lokasi";
+    : shipment.current_location_label?.trim() || "Driver belum mengirim lokasi";
 
   return {
     trackingNumber: shipment.tracking_number,
@@ -179,7 +178,57 @@ function mapShipmentRow(shipment: ShipmentRow, driverMap: Map<string, DriverReco
   };
 }
 
-async function loadRemoteData() {
+function applySiteSettings(row: Record<string, unknown> | null) {
+  if (!row) return;
+
+  state.siteSettings = {
+    heroTitle: (row.hero_title as string | null) ?? defaultSiteSettings.heroTitle,
+    subheadline: (row.subheadline as string | null) ?? defaultSiteSettings.subheadline,
+    whatsapp: (row.whatsapp as string | null) ?? defaultSiteSettings.whatsapp,
+    primaryCta: (row.primary_cta as string | null) ?? defaultSiteSettings.primaryCta,
+    heroImage1: (row.hero_image_1 as string | null) ?? defaultSiteSettings.heroImage1,
+    heroImage2: (row.hero_image_2 as string | null) ?? defaultSiteSettings.heroImage2,
+    heroImage3: (row.hero_image_3 as string | null) ?? defaultSiteSettings.heroImage3,
+    whyPackagingImage: (row.why_packaging_image as string | null) ?? defaultSiteSettings.whyPackagingImage,
+    whyDeliveryImage: (row.why_delivery_image as string | null) ?? defaultSiteSettings.whyDeliveryImage,
+    testimonialImage1: (row.testimonial_image_1 as string | null) ?? defaultSiteSettings.testimonialImage1,
+    testimonialImage2: (row.testimonial_image_2 as string | null) ?? defaultSiteSettings.testimonialImage2,
+    testimonialImage3: (row.testimonial_image_3 as string | null) ?? defaultSiteSettings.testimonialImage3,
+    historyImage: (row.history_image as string | null) ?? defaultSiteSettings.historyImage
+  };
+}
+
+function applyRouteRates(rows: Record<string, unknown>[] | null) {
+  if (!rows?.length) return;
+
+  state.routeRates = rows.map((route) => ({
+    id: String(route.id),
+    origin: String(route.origin),
+    destination: String(route.destination),
+    itemType: String(route.item_type),
+    flatPrice: Number(route.flat_price ?? 0),
+    maxVolumeM3: Number(route.max_volume_m3 ?? 0),
+    eta: String(route.eta ?? "-"),
+    vehicle: String(route.vehicle ?? "-"),
+    note: String(route.note ?? "")
+  }));
+}
+
+async function loadPublicData() {
+  if (!isSupabaseConfigured || !supabase) return false;
+
+  const [settingsRes, routesRes] = await Promise.all([
+    supabase.from("site_settings").select("*").limit(1).maybeSingle(),
+    supabase.from("route_rates").select("*").order("destination")
+  ]);
+
+  applySiteSettings(settingsRes.data as Record<string, unknown> | null);
+  applyRouteRates(routesRes.data as Record<string, unknown>[] | null);
+  state.source = "supabase";
+  return true;
+}
+
+async function loadAdminData() {
   if (!isSupabaseConfigured || !supabase) return false;
 
   const [settingsRes, routesRes, driversRes, shipmentsRes] = await Promise.all([
@@ -189,37 +238,8 @@ async function loadRemoteData() {
     supabase.from("shipments").select("*").order("tracking_number", { ascending: false })
   ]);
 
-  if (settingsRes.data) {
-    state.siteSettings = {
-      heroTitle: settingsRes.data.hero_title ?? defaultSiteSettings.heroTitle,
-      subheadline: settingsRes.data.subheadline ?? defaultSiteSettings.subheadline,
-      whatsapp: settingsRes.data.whatsapp ?? defaultSiteSettings.whatsapp,
-      primaryCta: settingsRes.data.primary_cta ?? defaultSiteSettings.primaryCta,
-      heroImage1: settingsRes.data.hero_image_1 ?? defaultSiteSettings.heroImage1,
-      heroImage2: settingsRes.data.hero_image_2 ?? defaultSiteSettings.heroImage2,
-      heroImage3: settingsRes.data.hero_image_3 ?? defaultSiteSettings.heroImage3,
-      whyPackagingImage: settingsRes.data.why_packaging_image ?? defaultSiteSettings.whyPackagingImage,
-      whyDeliveryImage: settingsRes.data.why_delivery_image ?? defaultSiteSettings.whyDeliveryImage,
-      testimonialImage1: settingsRes.data.testimonial_image_1 ?? defaultSiteSettings.testimonialImage1,
-      testimonialImage2: settingsRes.data.testimonial_image_2 ?? defaultSiteSettings.testimonialImage2,
-      testimonialImage3: settingsRes.data.testimonial_image_3 ?? defaultSiteSettings.testimonialImage3,
-      historyImage: settingsRes.data.history_image ?? defaultSiteSettings.historyImage
-    };
-  }
-
-  if (routesRes.data?.length) {
-    state.routeRates = routesRes.data.map((route) => ({
-      id: String(route.id),
-      origin: route.origin,
-      destination: route.destination,
-      itemType: route.item_type,
-      flatPrice: route.flat_price,
-      maxVolumeM3: route.max_volume_m3,
-      eta: route.eta,
-      vehicle: route.vehicle,
-      note: route.note ?? ""
-    }));
-  }
+  applySiteSettings(settingsRes.data as Record<string, unknown> | null);
+  applyRouteRates(routesRes.data as Record<string, unknown>[] | null);
 
   const driverRows = (driversRes.data ?? []) as DriverRow[];
   state.drivers = driverRows.map(mapDriverRow);
@@ -231,13 +251,48 @@ async function loadRemoteData() {
   return true;
 }
 
-export async function initializeOpsStore(force = false) {
+export async function fetchPublicTrackingByCode(trackingNumber: string): Promise<ShipmentRecord | null> {
+  if (!isSupabaseConfigured || !supabase) return null;
+
+  const normalizedTracking = trackingNumber.trim();
+  if (!normalizedTracking) return null;
+
+  const shipmentRes = await supabase
+    .from("shipments")
+    .select("*")
+    .eq("tracking_number", normalizedTracking)
+    .maybeSingle();
+
+  if (!shipmentRes.data) {
+    return null;
+  }
+
+  const shipmentRow = shipmentRes.data as ShipmentRow;
+  let driverMap = new Map<string, DriverRecord>();
+
+  if (shipmentRow.driver_id) {
+    const driverRes = await supabase
+      .from("drivers")
+      .select("id, name, phone, status, primary_vehicle, active_trips, route, is_tracking, last_seen_at, last_latitude, last_longitude, last_accuracy")
+      .eq("id", shipmentRow.driver_id)
+      .maybeSingle();
+
+    if (driverRes.data) {
+      const driver = mapDriverRow(driverRes.data as DriverRow);
+      driverMap = new Map([[driver.id, driver]]);
+    }
+  }
+
+  return mapShipmentRow(shipmentRow, driverMap);
+}
+
+export async function initializePublicStore(force = false) {
   if (state.initialized && !force) return;
   state.loading = true;
 
   if (isSupabaseConfigured && supabase) {
     try {
-      await loadRemoteData();
+      await loadPublicData();
     } catch {
       state.source = "supabase-error";
     }
@@ -247,10 +302,35 @@ export async function initializeOpsStore(force = false) {
   state.initialized = true;
 }
 
+export async function initializeOpsStore(force = false) {
+  if (state.initialized && !force) return;
+  state.loading = true;
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await loadAdminData();
+    } catch {
+      state.source = "supabase-error";
+    }
+  }
+
+  state.loading = false;
+  state.initialized = true;
+}
+
+export async function refreshPublicStore() {
+  if (!isSupabaseConfigured || !supabase) return;
+  try {
+    await loadPublicData();
+  } catch {
+    state.source = "supabase-error";
+  }
+}
+
 export async function refreshOpsStore() {
   if (!isSupabaseConfigured || !supabase) return;
   try {
-    await loadRemoteData();
+    await loadAdminData();
   } catch {
     state.source = "supabase-error";
   }
@@ -397,4 +477,3 @@ export function useOpsStore() {
     saveSiteSettings
   };
 }
-

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="min-h-screen">
     <header class="sticky top-0 z-50 border-b border-white/40 glass">
       <div class="container flex items-center justify-between py-4">
@@ -221,24 +221,31 @@
               <div class="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
                 <div>
                   <p class="section-kicker">Detail Tracking</p>
-                  <h3 class="font-display mt-2 text-3xl font-bold">{{ trackingCard.trackingNumber }}</h3>
-                  <div class="mt-6 grid gap-4">
-                    <div class="rounded-[1.25rem] bg-slate-50 p-4">
-                      <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Sopir</p>
-                      <p class="mt-2 text-lg font-bold">{{ trackingCard.driverName }}</p>
+                  <template v-if="hasSubmittedTracking">
+                    <h3 class="font-display mt-2 text-3xl font-bold">{{ trackingCard.trackingNumber }}</h3>
+                    <div class="mt-6 grid gap-4">
+                      <div class="rounded-[1.25rem] bg-slate-50 p-4">
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Sopir</p>
+                        <p class="mt-2 text-lg font-bold">{{ trackingCard.driverName }}</p>
+                      </div>
+                      <div class="rounded-[1.25rem] bg-slate-50 p-4">
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">ETA</p>
+                        <p class="mt-2 text-lg font-bold">{{ trackingCard.eta }}</p>
+                      </div>
+                      <div class="rounded-[1.25rem] bg-slate-50 p-4">
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Posisi Terakhir</p>
+                        <p class="mt-2 text-lg font-bold">{{ trackingCard.currentLocation }}</p>
+                      </div>
+                      <div class="rounded-[1.25rem] bg-slate-50 p-4">
+                        <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Update Driver</p>
+                        <p class="mt-2 text-lg font-bold">{{ trackingFreshness }}</p>
+                      </div>
                     </div>
-                    <div class="rounded-[1.25rem] bg-slate-50 p-4">
-                      <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">ETA</p>
-                      <p class="mt-2 text-lg font-bold">{{ trackingCard.eta }}</p>
-                    </div>
-                    <div class="rounded-[1.25rem] bg-slate-50 p-4">
-                      <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Posisi Terakhir</p>
-                      <p class="mt-2 text-lg font-bold">{{ trackingCard.currentLocation }}</p>
-                    </div>
-                    <div class="rounded-[1.25rem] bg-slate-50 p-4">
-                      <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Update Driver</p>
-                      <p class="mt-2 text-lg font-bold">{{ trackingFreshness }}</p>
-                    </div>
+                  </template>
+                  <div v-else class="mt-6 rounded-[1.75rem] border border-dashed border-slate-200 bg-slate-50 px-6 py-8">
+                    <p class="text-sm font-bold uppercase tracking-[0.24em] text-primary">Tracking Belum Dimulai</p>
+                    <p class="mt-3 text-2xl font-bold text-slate-950">Masukkan kode track</p>
+                    <p class="mt-3 text-sm leading-7 text-muted-foreground">Detail sopir, ETA, lokasi terakhir, dan update driver akan muncul setelah kamu memasukkan nomor tracking yang valid.</p>
                   </div>
                 </div>
 
@@ -247,17 +254,26 @@
                     <p class="section-kicker">Realtime Maps</p>
                     <p class="mt-2 text-lg font-bold text-slate-950">Embed lokasi pengiriman</p>
                   </div>
-                  <iframe
-                    :src="embeddedMapUrl"
-                    class="h-[360px] w-full border-0"
-                    loading="lazy"
-                    referrerpolicy="no-referrer-when-downgrade"
-                    title="Realtime Maps"
-                  ></iframe>
-                  <div class="px-5 py-4">
-                    <div class="space-y-3">
-                      <p class="text-sm leading-6 text-muted-foreground">{{ trackingCard.mapNote }}</p>
-                      <Button as="a" :href="liveMapLink" class="w-full" rel="noreferrer" target="_blank" variant="secondary">Buka Google Maps</Button>
+                  <template v-if="hasSubmittedTracking">
+                    <iframe
+                      :src="embeddedMapUrl"
+                      class="h-[360px] w-full border-0"
+                      loading="lazy"
+                      referrerpolicy="no-referrer-when-downgrade"
+                      title="Realtime Maps"
+                    ></iframe>
+                    <div class="px-5 py-4">
+                      <div class="space-y-3">
+                        <p class="text-sm leading-6 text-muted-foreground">{{ trackingCard.mapNote }}</p>
+                        <Button as="a" :href="liveMapLink" class="w-full" rel="noreferrer" target="_blank" variant="secondary">Buka Google Maps</Button>
+                      </div>
+                    </div>
+                  </template>
+                  <div v-else class="flex h-[360px] items-center justify-center px-6 text-center">
+                    <div>
+                      <p class="text-sm font-bold uppercase tracking-[0.24em] text-primary">Maps Siap Digunakan</p>
+                      <p class="mt-3 text-2xl font-bold text-slate-950">Masukkan kode track</p>
+                      <p class="mt-3 max-w-sm text-sm leading-7 text-muted-foreground">Peta akan fokus ke posisi driver terakhir setelah nomor tracking yang valid dimasukkan.</p>
                     </div>
                   </div>
                 </div>
@@ -349,13 +365,13 @@
                     class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-50"
                     @click="prevTestimonial"
                   >
-                    <span aria-hidden="true">←</span>
+                    <span aria-hidden="true">â†</span>
                   </button>
                   <button
                     class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-50"
                     @click="nextTestimonial"
                   >
-                    <span aria-hidden="true">→</span>
+                    <span aria-hidden="true">â†’</span>
                   </button>
                 </div>
               </div>
@@ -483,7 +499,7 @@ import Button from "@/components/ui/Button.vue";
 import Card from "@/components/ui/Card.vue";
 import { itemTypes } from "@/data/catalog";
 import { formatCurrency } from "@/lib/utils";
-import { initializeOpsStore, refreshOpsStore, useOpsStore } from "@/store/ops";
+import { fetchPublicTrackingByCode, initializePublicStore, useOpsStore, type ShipmentRecord } from "@/store/ops";
 
 const { state } = useOpsStore();
 
@@ -588,11 +604,18 @@ const result = reactive({
 
 const trackingInput = ref("");
 const submittedTracking = ref("");
-const trackedShipment = computed(() =>
-  state.shipments.find((shipment) => shipment.trackingNumber.toLowerCase() === submittedTracking.value.toLowerCase()) ?? null
-);
+const trackedShipment = ref<ShipmentRecord | null>(null);
+const trackingLoading = ref(false);
 const trackingCard = computed(() => {
   if (!submittedTracking.value.trim()) return emptyShipment;
+  if (trackingLoading.value) {
+    return {
+      ...emptyShipment,
+      trackingNumber: submittedTracking.value,
+      status: "Mencari data tracking...",
+      mapNote: "Sedang mengambil data pengiriman terbaru."
+    };
+  }
   return trackedShipment.value ?? {
     ...emptyShipment,
     trackingNumber: submittedTracking.value,
@@ -601,6 +624,7 @@ const trackingCard = computed(() => {
   };
 });
 const activeTestimonial = computed(() => testimonials.value[activeTestimonialIndex.value] ?? testimonials.value[0]);
+const hasSubmittedTracking = computed(() => submittedTracking.value.trim().length > 0);
 const mobileMenuOpen = ref(false);
 const mobileLinks = [
   { href: "#hero", label: "Beranda" },
@@ -631,11 +655,11 @@ const liveMapLink = computed(() => {
 
 const trackingFreshness = computed(() => {
   if (!submittedTracking.value.trim()) {
-    return "Masukkan kode track";
+    return "Menunggu kode track";
   }
 
   if (!trackingCard.value.lastSeenAt) {
-    return trackingCard.value.isTracking ? "Tracking aktif, menunggu titik pertama" : "Masukkan kode track";
+    return trackingCard.value.isTracking ? "Tracking aktif, menunggu titik pertama" : "Menunggu kode track";
   }
 
   const diffMs = Date.now() - new Date(trackingCard.value.lastSeenAt).getTime();
@@ -677,13 +701,29 @@ function calculateShipping() {
   result.recommendation = tripMultiplier > 1 ? `Melebihi tarif flat, perlu ${tripMultiplier} trip` : "Masuk tarif flat";
 }
 
-function trackShipment() {
+async function loadTrackedShipment() {
+  if (!submittedTracking.value.trim()) {
+    trackedShipment.value = null;
+    return;
+  }
+
+  trackingLoading.value = true;
+  try {
+    trackedShipment.value = await fetchPublicTrackingByCode(submittedTracking.value);
+  } finally {
+    trackingLoading.value = false;
+  }
+}
+
+async function trackShipment() {
   submittedTracking.value = trackingInput.value.trim();
+  await loadTrackedShipment();
 }
 
 function startTrackingRefresh() {
   trackingTimer = window.setInterval(async () => {
-    await refreshOpsStore();
+    if (!submittedTracking.value.trim()) return;
+    await loadTrackedShipment();
   }, 15000);
 }
 
@@ -744,19 +784,10 @@ watch(availableDestinations, (destinations) => {
   }
 });
 
-watch(
-  () => state.shipments,
-  (shipments) => {
-    if (submittedTracking.value) {
-      const matchedShipment = shipments.find((shipment) => shipment.trackingNumber.toLowerCase() === submittedTracking.value.toLowerCase());
-      if (!matchedShipment) return;
-    }
-  },
-  { deep: true }
-);
+
 
 onMounted(async () => {
-  await initializeOpsStore();
+  await initializePublicStore();
   if (!form.destinationCity && availableDestinations.value.length) {
     form.destinationCity = availableDestinations.value[0];
   }
@@ -774,3 +805,9 @@ onBeforeUnmount(() => {
   revealObserver?.disconnect();
 });
 </script>
+
+
+
+
+
+
