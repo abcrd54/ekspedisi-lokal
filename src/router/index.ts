@@ -15,13 +15,17 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   await initializeAuth();
-  const { isAuthenticated, isSupabaseConfigured } = useAuthStore();
+  const { isAuthenticated, isAdmin, isSupabaseConfigured } = useAuthStore();
 
   if (to.meta.requiresAuth && isSupabaseConfigured && !isAuthenticated.value) {
     return { name: "admin-login" };
   }
 
-  if (to.name === "admin-login" && isAuthenticated.value) {
+  if (to.meta.requiresAuth && isSupabaseConfigured && isAuthenticated.value && !isAdmin.value) {
+    return { name: "admin-login" };
+  }
+
+  if (to.name === "admin-login" && isAuthenticated.value && isAdmin.value) {
     return { name: "admin" };
   }
 

@@ -28,7 +28,6 @@ export type DriverRecord = {
   name: string;
   phone: string;
   status: string;
-  primaryVehicle: string;
   activeTrips: number;
   route: string;
   isTracking: boolean;
@@ -100,7 +99,6 @@ type DriverRow = {
   name: string;
   phone: string | null;
   status: string | null;
-  primary_vehicle: string | null;
   active_trips: number | null;
   route: string | null;
   is_tracking: boolean | null;
@@ -225,7 +223,6 @@ function mapDriverRow(driver: DriverRow): DriverRecord {
     name: compactText(driver.name, "Driver"),
     phone: compactText(driver.phone, "-"),
     status: compactText(driver.status, "Standby"),
-    primaryVehicle: compactText(driver.primary_vehicle, "-"),
     activeTrips: Number(driver.active_trips ?? 0),
     route: compactText(driver.route, "-"),
     isTracking: driver.is_tracking ?? false,
@@ -412,7 +409,7 @@ export async function fetchPublicTrackingByCode(trackingNumber: string): Promise
   if (shipmentRow.driver_id) {
     const driverRes = await supabase
       .from("drivers")
-      .select("id, name, phone, status, primary_vehicle, active_trips, route, is_tracking, last_seen_at, last_latitude, last_longitude, last_accuracy")
+      .select("id, name, phone, status, active_trips, route, is_tracking, last_seen_at, last_latitude, last_longitude, last_accuracy")
       .eq("id", shipmentRow.driver_id)
       .maybeSingle();
 
@@ -528,7 +525,6 @@ async function upsertDriverRemote(driver: DriverRecord) {
     name: compactText(driver.name, "Driver Baru"),
     phone: compactText(driver.phone, "-"),
     status: compactText(driver.status, "Standby"),
-    primary_vehicle: compactText(driver.primaryVehicle, "-"),
     active_trips: Math.max(0, driver.activeTrips),
     route: compactText(driver.route, "-"),
     is_tracking: driver.isTracking,

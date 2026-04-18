@@ -270,17 +270,9 @@
                           <option>Standby</option>
                         </select>
                       </label>
-                      <label class="grid gap-2 text-sm font-semibold">Armada Utama
-                        <select v-model="driverForm.primaryVehicle" class="field">
-                          <option value="">Pilih armada</option>
-                          <option v-for="vehicle in vehiclesList" :key="vehicle.id" :value="vehicle.name">{{ vehicle.name }} - {{ vehicle.plateNumber }}</option>
-                        </select>
-                      </label>
-                    </div>
-                    <div class="grid gap-4 sm:grid-cols-2">
                       <label class="grid gap-2 text-sm font-semibold">Trip Aktif<input v-model.number="driverForm.activeTrips" class="field" type="number" min="0" /></label>
-                      <label class="grid gap-2 text-sm font-semibold">Rute Utama<input v-model="driverForm.route" class="field" /></label>
                     </div>
+                    <label class="grid gap-2 text-sm font-semibold">Rute Utama<input v-model="driverForm.route" class="field" /></label>
                     <label class="grid gap-2 text-sm font-semibold">Password Login App Driver<input v-model="driverForm.password" class="field" type="password" placeholder="Isi saat buat baru atau reset password" /></label>
                     <p class="text-sm leading-7 text-muted-foreground">Password disimpan lewat <code>password_input</code> lalu otomatis di-hash di database.</p>
                     <div class="grid gap-3 sm:grid-cols-2">
@@ -301,7 +293,7 @@
                         <tr>
                           <th class="px-6 py-4 font-semibold">Driver</th>
                           <th class="px-6 py-4 font-semibold">HP</th>
-                          <th class="px-6 py-4 font-semibold">Armada</th>
+                          <th class="px-6 py-4 font-semibold">Trip Aktif</th>
                           <th class="px-6 py-4 font-semibold">Status</th>
                           <th class="px-6 py-4 font-semibold">Aksi</th>
                         </tr>
@@ -310,7 +302,7 @@
                         <tr v-for="driver in driversList" :key="driver.id" class="border-t border-slate-100">
                           <td class="px-6 py-4 font-bold text-slate-950">{{ driver.name }}</td>
                           <td class="px-6 py-4">{{ driver.phone }}</td>
-                          <td class="px-6 py-4">{{ driver.primaryVehicle }}</td>
+                          <td class="px-6 py-4">{{ driver.activeTrips }}</td>
                           <td class="px-6 py-4">{{ driver.status }}</td>
                           <td class="px-6 py-4">
                             <div class="flex gap-2">
@@ -551,7 +543,6 @@ const driverForm = reactive({
   name: "Agus Santoso",
   phone: "0812-9090-1101",
   status: "On Duty",
-  primaryVehicle: "",
   activeTrips: 2,
   route: "Bandung - Jakarta",
   password: ""
@@ -698,7 +689,6 @@ function resetDriverForm() {
   driverForm.name = "Agus Santoso";
   driverForm.phone = "0812-9090-1101";
   driverForm.status = "On Duty";
-  driverForm.primaryVehicle = vehiclesList.value[0]?.name ?? "";
   driverForm.activeTrips = 2;
   driverForm.route = "Bandung - Jakarta";
   driverForm.password = "";
@@ -711,7 +701,6 @@ function editDriver(id: string) {
   driverForm.name = driver.name;
   driverForm.phone = driver.phone;
   driverForm.status = driver.status;
-  driverForm.primaryVehicle = driver.primaryVehicle;
   driverForm.activeTrips = driver.activeTrips;
   driverForm.route = driver.route;
   driverForm.password = "";
@@ -724,7 +713,6 @@ async function saveDriverRecord() {
     name: driverForm.name,
     phone: driverForm.phone,
     status: driverForm.status,
-    primaryVehicle: driverForm.primaryVehicle,
     activeTrips: driverForm.activeTrips,
     route: driverForm.route,
     isTracking: existingDriver?.isTracking ?? false,
@@ -834,7 +822,6 @@ onMounted(async () => {
   await initializeAuth();
   await initializeOpsStore();
   if (!routeForm.vehicleId && vehiclesList.value[0]) routeForm.vehicleId = vehiclesList.value[0].id;
-  if (!driverForm.primaryVehicle && vehiclesList.value[0]) driverForm.primaryVehicle = vehiclesList.value[0].name;
   resetShipmentForm();
 });
 </script>

@@ -6,10 +6,16 @@ const authState = reactive({
   initialized: false,
   loading: false,
   user: null as User | null,
+  isAdmin: false,
   error: ""
 });
 
 let listenerBound = false;
+
+async function syncAdminState(user: User | null) {
+  authState.user = user;
+  authState.isAdmin = Boolean(user);
+}
 
 export async function initializeAuth() {
   if (authState.initialized) return;
@@ -20,14 +26,14 @@ export async function initializeAuth() {
 
   authState.loading = true;
   const { data, error } = await supabase.auth.getSession();
-  authState.user = data.session?.user ?? null;
+  await syncAdminState(data.session?.user ?? null);
   authState.error = error?.message ?? "";
   authState.loading = false;
   authState.initialized = true;
 
   if (!listenerBound) {
-    supabase.auth.onAuthStateChange((_event, session) => {
-      authState.user = session?.user ?? null;
+    supabase.auth.onAuthStateChange(async (_event, session) => {
+      await syncAdminState(session?.user ?? null);
     });
     listenerBound = true;
   }
@@ -41,7 +47,12 @@ export async function signInAdmin(email: string, password: string) {
 
   authState.loading = true;
   authState.error = "";
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (!error) {
+    await syncAdminState(data.user ?? null);
+  }
+
   authState.loading = false;
   authState.error = error?.message ?? "";
   return !error;
@@ -50,12 +61,15 @@ export async function signInAdmin(email: string, password: string) {
 export async function signOutAdmin() {
   if (!supabase) return;
   await supabase.auth.signOut();
+  authState.user = null;
+  authState.isAdmin = false;
 }
 
 export function useAuthStore() {
   return {
     state: authState,
     isAuthenticated: computed(() => Boolean(authState.user)),
+    isAdmin: computed(() => authState.isAdmin),
     isSupabaseConfigured
   };
 }
