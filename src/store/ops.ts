@@ -353,7 +353,10 @@ async function loadAdminData() {
     supabase.from("site_settings").select("*").limit(1).maybeSingle(),
     supabase.from("vehicles").select("*").order("name"),
     supabase.from("route_rates").select("*").order("destination"),
-    supabase.from("drivers").select("*").order("name"),
+    supabase
+      .from("drivers")
+      .select("id, name, phone, status, active_trips, route, is_tracking, last_seen_at, last_latitude, last_longitude, last_accuracy")
+      .order("name"),
     supabase.from("shipments").select("*").order("tracking_number", { ascending: false }),
     supabase.from("shipment_items").select("*").order("created_at", { ascending: true })
   ]);

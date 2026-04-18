@@ -126,12 +126,13 @@
                   <p class="section-kicker">Master Rute</p>
                   <div class="mt-6 grid gap-4">
                     <div class="grid gap-4 sm:grid-cols-2">
-                      <label class="grid gap-2 text-sm font-semibold">Asal<input v-model="routeForm.origin" class="field" /></label>
-                      <label class="grid gap-2 text-sm font-semibold">Tujuan<input v-model="routeForm.destination" class="field" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Asal<input v-model="routeForm.origin" class="field" placeholder="Contoh: Jepara" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Tujuan<input v-model="routeForm.destination" class="field" placeholder="Contoh: Bandung" /></label>
                     </div>
                     <div class="grid gap-4 sm:grid-cols-2">
                       <label class="grid gap-2 text-sm font-semibold">Jenis Barang
                         <select v-model="routeForm.itemType" class="field">
+                          <option value="">Pilih jenis barang</option>
                           <option v-for="item in itemTypes" :key="item.name" :value="item.name">{{ item.name }}</option>
                         </select>
                       </label>
@@ -143,11 +144,11 @@
                       </label>
                     </div>
                     <div class="grid gap-4 sm:grid-cols-3">
-                      <label class="grid gap-2 text-sm font-semibold">Tarif Flat<input v-model.number="routeForm.flatPrice" class="field" type="number" min="0" /></label>
-                      <label class="grid gap-2 text-sm font-semibold">Batas Volume<input v-model.number="routeForm.maxVolumeM3" class="field" type="number" min="0.1" step="0.1" /></label>
-                      <label class="grid gap-2 text-sm font-semibold">ETA<input v-model="routeForm.eta" class="field" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Tarif Flat<input v-model.number="routeForm.flatPrice" class="field" type="number" min="0" placeholder="Contoh: 2500000" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Batas Volume<input v-model.number="routeForm.maxVolumeM3" class="field" type="number" min="0.1" step="0.1" placeholder="Contoh: 6" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">ETA<input v-model="routeForm.eta" class="field" placeholder="Contoh: 2-4 hari" /></label>
                     </div>
-                    <label class="grid gap-2 text-sm font-semibold">Catatan<textarea v-model="routeForm.note" class="field-textarea" rows="4"></textarea></label>
+                    <label class="grid gap-2 text-sm font-semibold">Catatan<textarea v-model="routeForm.note" class="field-textarea" rows="4" placeholder="Tambahkan catatan tarif atau batasan rute"></textarea></label>
                     <div class="grid gap-3 sm:grid-cols-2">
                       <Button class="w-full" variant="secondary" @click="saveRoute">{{ editingRouteId ? 'Update Rute' : 'Input Rute' }}</Button>
                       <Button v-if="editingRouteId" class="w-full" variant="ghost" @click="resetRouteForm">Batal Edit</Button>
@@ -197,14 +198,15 @@
                   <p class="section-kicker">Master Armada</p>
                   <div class="mt-6 grid gap-4">
                     <div class="grid gap-4 sm:grid-cols-2">
-                      <label class="grid gap-2 text-sm font-semibold">Nama Armada<input v-model="vehicleForm.name" class="field" /></label>
-                      <label class="grid gap-2 text-sm font-semibold">Nomor Polisi<input v-model="vehicleForm.plateNumber" class="field" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Nama Armada<input v-model="vehicleForm.name" class="field" placeholder="Contoh: CDD Box" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Nomor Polisi<input v-model="vehicleForm.plateNumber" class="field" placeholder="Contoh: B 9123 CD" /></label>
                     </div>
                     <div class="grid gap-4 sm:grid-cols-3">
-                      <label class="grid gap-2 text-sm font-semibold">Tipe<input v-model="vehicleForm.vehicleType" class="field" /></label>
-                      <label class="grid gap-2 text-sm font-semibold">Kapasitas m3<input v-model.number="vehicleForm.capacityM3" class="field" type="number" min="0" step="0.1" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Tipe<input v-model="vehicleForm.vehicleType" class="field" placeholder="Contoh: Box Besar" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Kapasitas m3<input v-model.number="vehicleForm.capacityM3" class="field" type="number" min="0" step="0.1" placeholder="Contoh: 12" /></label>
                       <label class="grid gap-2 text-sm font-semibold">Status
                         <select v-model="vehicleForm.status" class="field">
+                          <option value="">Pilih status armada</option>
                           <option>Aktif</option>
                           <option>Maintenance</option>
                           <option>Nonaktif</option>
@@ -260,19 +262,20 @@
                   <p class="section-kicker">Master Driver</p>
                   <div class="mt-6 grid gap-4">
                     <div class="grid gap-4 sm:grid-cols-2">
-                      <label class="grid gap-2 text-sm font-semibold">Nama Driver<input v-model="driverForm.name" class="field" /></label>
-                      <label class="grid gap-2 text-sm font-semibold">Nomor HP<input v-model="driverForm.phone" class="field" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Nama Driver<input v-model="driverForm.name" class="field" placeholder="Contoh: Agus Santoso" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Nomor HP<input v-model="driverForm.phone" class="field" placeholder="Contoh: 081290901101" /></label>
                     </div>
                     <div class="grid gap-4 sm:grid-cols-2">
                       <label class="grid gap-2 text-sm font-semibold">Status
                         <select v-model="driverForm.status" class="field">
+                          <option value="">Pilih status driver</option>
                           <option>On Duty</option>
                           <option>Standby</option>
                         </select>
                       </label>
-                      <label class="grid gap-2 text-sm font-semibold">Trip Aktif<input v-model.number="driverForm.activeTrips" class="field" type="number" min="0" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Trip Aktif<input v-model.number="driverForm.activeTrips" class="field" type="number" min="0" placeholder="Contoh: 0" /></label>
                     </div>
-                    <label class="grid gap-2 text-sm font-semibold">Rute Utama<input v-model="driverForm.route" class="field" /></label>
+                    <label class="grid gap-2 text-sm font-semibold">Rute Utama<input v-model="driverForm.route" class="field" placeholder="Contoh: Bandung - Jakarta" /></label>
                     <label class="grid gap-2 text-sm font-semibold">Password Login App Driver<input v-model="driverForm.password" class="field" type="password" placeholder="Isi saat buat baru atau reset password" /></label>
                     <p class="text-sm leading-7 text-muted-foreground">Password disimpan lewat <code>password_input</code> lalu otomatis di-hash di database.</p>
                     <div class="grid gap-3 sm:grid-cols-2">
@@ -324,7 +327,7 @@
                   <p class="section-kicker">Buat Shipment</p>
                   <div class="mt-6 grid gap-4">
                     <div class="grid gap-4 sm:grid-cols-2">
-                      <label class="grid gap-2 text-sm font-semibold">Nama Customer<input v-model="shipmentForm.customer" class="field" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Nama Customer<input v-model="shipmentForm.customer" class="field" placeholder="Contoh: CV Mebel Nusantara" /></label>
                       <label class="grid gap-2 text-sm font-semibold">Tanggal Kirim<input v-model="shipmentForm.shipDate" class="field" type="date" /></label>
                     </div>
                     <div class="grid gap-4 sm:grid-cols-3">
@@ -348,11 +351,11 @@
                       </label>
                     </div>
                     <div class="grid gap-4 sm:grid-cols-2">
-                      <label class="grid gap-2 text-sm font-semibold">Nama Penerima<input v-model="shipmentForm.recipientName" class="field" /></label>
-                      <label class="grid gap-2 text-sm font-semibold">Nomor Penerima<input v-model="shipmentForm.recipientPhone" class="field" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Nama Penerima<input v-model="shipmentForm.recipientName" class="field" placeholder="Contoh: Budi Setiawan" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Nomor Penerima<input v-model="shipmentForm.recipientPhone" class="field" placeholder="Contoh: 081200001122" /></label>
                     </div>
-                    <label class="grid gap-2 text-sm font-semibold">Alamat Penerima<textarea v-model="shipmentForm.recipientAddress" class="field-textarea" rows="3"></textarea></label>
-                    <label class="grid gap-2 text-sm font-semibold">Catatan Pengiriman<textarea v-model="shipmentForm.note" class="field-textarea" rows="3"></textarea></label>
+                    <label class="grid gap-2 text-sm font-semibold">Alamat Penerima<textarea v-model="shipmentForm.recipientAddress" class="field-textarea" rows="3" placeholder="Masukkan alamat lengkap penerima"></textarea></label>
+                    <label class="grid gap-2 text-sm font-semibold">Catatan Pengiriman<textarea v-model="shipmentForm.note" class="field-textarea" rows="3" placeholder="Tambahkan catatan pickup atau pengantaran"></textarea></label>
                   </div>
                 </Card>
 
@@ -372,15 +375,15 @@
                         <Button v-if="shipmentItems.length > 1" size="sm" variant="ghost" class="text-red-600 hover:bg-red-50" @click="removeShipmentItem(index)">Hapus</Button>
                       </div>
                       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-                        <label class="grid gap-2 text-sm font-semibold">Nama Barang<input v-model="item.itemName" class="field" /></label>
-                        <label class="grid gap-2 text-sm font-semibold">Qty<input v-model.number="item.quantity" class="field" type="number" min="1" /></label>
+                        <label class="grid gap-2 text-sm font-semibold">Nama Barang<input v-model="item.itemName" class="field" placeholder="Contoh: Lemari 2 Pintu" /></label>
+                        <label class="grid gap-2 text-sm font-semibold">Qty<input v-model.number="item.quantity" class="field" type="number" min="1" placeholder="Contoh: 1" /></label>
                       </div>
                       <div class="mt-4 grid gap-4 sm:grid-cols-3">
-                        <label class="grid gap-2 text-sm font-semibold">Panjang<input v-model.number="item.lengthCm" class="field" type="number" min="0" /></label>
-                        <label class="grid gap-2 text-sm font-semibold">Lebar<input v-model.number="item.widthCm" class="field" type="number" min="0" /></label>
-                        <label class="grid gap-2 text-sm font-semibold">Tinggi<input v-model.number="item.heightCm" class="field" type="number" min="0" /></label>
+                        <label class="grid gap-2 text-sm font-semibold">Panjang<input v-model.number="item.lengthCm" class="field" type="number" min="0" placeholder="0" /></label>
+                        <label class="grid gap-2 text-sm font-semibold">Lebar<input v-model.number="item.widthCm" class="field" type="number" min="0" placeholder="0" /></label>
+                        <label class="grid gap-2 text-sm font-semibold">Tinggi<input v-model.number="item.heightCm" class="field" type="number" min="0" placeholder="0" /></label>
                       </div>
-                      <label class="mt-4 grid gap-2 text-sm font-semibold">Catatan Item<textarea v-model="item.note" class="field-textarea" rows="2"></textarea></label>
+                      <label class="mt-4 grid gap-2 text-sm font-semibold">Catatan Item<textarea v-model="item.note" class="field-textarea" rows="2" placeholder="Opsional"></textarea></label>
                     </div>
                   </div>
 
@@ -521,47 +524,47 @@ const driversList = computed(() => opsState.drivers);
 const shipmentsList = computed(() => opsState.shipments);
 
 const routeForm = reactive({
-  origin: "Jepara",
-  destination: "Bandung",
-  itemType: "Sofa",
-  flatPrice: 2500000,
-  maxVolumeM3: 6,
-  eta: "2-4 hari",
+  origin: "",
+  destination: "",
+  itemType: "",
+  flatPrice: undefined as number | undefined,
+  maxVolumeM3: undefined as number | undefined,
+  eta: "",
   vehicleId: "",
-  note: "Tarif flat untuk pengiriman furniture tujuan Bandung."
+  note: ""
 });
 
 const vehicleForm = reactive({
-  name: "CDD Box",
-  plateNumber: "B 9123 CD",
-  vehicleType: "Box Besar",
-  capacityM3: 12,
-  status: "Aktif"
+  name: "",
+  plateNumber: "",
+  vehicleType: "",
+  capacityM3: undefined as number | undefined,
+  status: ""
 });
 
 const driverForm = reactive({
-  name: "Agus Santoso",
-  phone: "0812-9090-1101",
-  status: "On Duty",
-  activeTrips: 2,
-  route: "Bandung - Jakarta",
+  name: "",
+  phone: "",
+  status: "",
+  activeTrips: undefined as number | undefined,
+  route: "",
   password: ""
 });
 
 const shipmentForm = reactive({
-  customer: "CV Mebel Nusantara",
+  customer: "",
   routeId: "",
   driverId: "",
   vehicleId: "",
-  shipDate: new Date().toISOString().slice(0, 10),
-  recipientName: "Budi Setiawan",
-  recipientPhone: "0812-0000-1122",
-  recipientAddress: "Jl. Soekarno Hatta No. 18, Bandung",
-  note: "Menunggu pickup dari workshop."
+  shipDate: "",
+  recipientName: "",
+  recipientPhone: "",
+  recipientAddress: "",
+  note: ""
 });
 
 const shipmentItems = ref<ShipmentItemInput[]>([
-  { itemName: "Lemari 2 Pintu", quantity: 1, lengthCm: 200, widthCm: 90, heightCm: 200, volumeM3: 0, note: "Finishing doff" }
+  { itemName: "", quantity: 1, lengthCm: 0, widthCm: 0, heightCm: 0, volumeM3: 0, note: "" }
 ]);
 
 const selectedRoute = computed(() => routeRates.value.find((route) => route.id === shipmentForm.routeId) ?? routeRates.value[0]);
@@ -600,14 +603,14 @@ function routeVehicleName(vehicleId: string) {
 
 function resetRouteForm() {
   editingRouteId.value = null;
-  routeForm.origin = "Jepara";
-  routeForm.destination = "Bandung";
-  routeForm.itemType = "Sofa";
-  routeForm.flatPrice = 2500000;
-  routeForm.maxVolumeM3 = 6;
-  routeForm.eta = "2-4 hari";
-  routeForm.vehicleId = vehiclesList.value[0]?.id ?? "";
-  routeForm.note = "Tarif flat untuk pengiriman furniture tujuan Bandung.";
+  routeForm.origin = "";
+  routeForm.destination = "";
+  routeForm.itemType = "";
+  routeForm.flatPrice = undefined;
+  routeForm.maxVolumeM3 = undefined;
+  routeForm.eta = "";
+  routeForm.vehicleId = "";
+  routeForm.note = "";
 }
 
 function editRoute(id: string) {
@@ -630,8 +633,8 @@ async function saveRoute() {
     origin: routeForm.origin,
     destination: routeForm.destination,
     itemType: routeForm.itemType,
-    flatPrice: routeForm.flatPrice,
-    maxVolumeM3: routeForm.maxVolumeM3,
+    flatPrice: routeForm.flatPrice ?? 0,
+    maxVolumeM3: routeForm.maxVolumeM3 ?? 0,
     eta: routeForm.eta,
     vehicleId: routeForm.vehicleId,
     vehicle: routeVehicleName(routeForm.vehicleId),
@@ -648,11 +651,11 @@ async function deleteRoute(id: string) {
 
 function resetVehicleForm() {
   editingVehicleId.value = null;
-  vehicleForm.name = "CDD Box";
-  vehicleForm.plateNumber = "B 9123 CD";
-  vehicleForm.vehicleType = "Box Besar";
-  vehicleForm.capacityM3 = 12;
-  vehicleForm.status = "Aktif";
+  vehicleForm.name = "";
+  vehicleForm.plateNumber = "";
+  vehicleForm.vehicleType = "";
+  vehicleForm.capacityM3 = undefined;
+  vehicleForm.status = "";
 }
 
 function editVehicle(id: string) {
@@ -672,7 +675,7 @@ async function saveVehicleRecord() {
     name: vehicleForm.name,
     plateNumber: vehicleForm.plateNumber,
     vehicleType: vehicleForm.vehicleType,
-    capacityM3: vehicleForm.capacityM3,
+    capacityM3: vehicleForm.capacityM3 ?? 0,
     status: vehicleForm.status
   };
   await saveVehicle(payload);
@@ -686,11 +689,11 @@ async function deleteVehicleRecord(id: string) {
 
 function resetDriverForm() {
   editingDriverId.value = null;
-  driverForm.name = "Agus Santoso";
-  driverForm.phone = "0812-9090-1101";
-  driverForm.status = "On Duty";
-  driverForm.activeTrips = 2;
-  driverForm.route = "Bandung - Jakarta";
+  driverForm.name = "";
+  driverForm.phone = "";
+  driverForm.status = "";
+  driverForm.activeTrips = undefined;
+  driverForm.route = "";
   driverForm.password = "";
 }
 
@@ -713,7 +716,7 @@ async function saveDriverRecord() {
     name: driverForm.name,
     phone: driverForm.phone,
     status: driverForm.status,
-    activeTrips: driverForm.activeTrips,
+    activeTrips: driverForm.activeTrips ?? 0,
     route: driverForm.route,
     isTracking: existingDriver?.isTracking ?? false,
     lastSeenAt: existingDriver?.lastSeenAt ?? null,
@@ -732,7 +735,7 @@ async function removeDriver(id: string) {
 }
 
 function addShipmentItem() {
-  shipmentItems.value.push({ itemName: "Barang Baru", quantity: 1, lengthCm: 100, widthCm: 50, heightCm: 50, volumeM3: 0, note: "" });
+  shipmentItems.value.push({ itemName: "", quantity: 1, lengthCm: 0, widthCm: 0, heightCm: 0, volumeM3: 0, note: "" });
 }
 
 function removeShipmentItem(index: number) {
@@ -740,17 +743,17 @@ function removeShipmentItem(index: number) {
 }
 
 function resetShipmentForm() {
-  shipmentForm.customer = "CV Mebel Nusantara";
-  shipmentForm.routeId = routeRates.value[0]?.id ?? "";
-  shipmentForm.driverId = driversList.value[0]?.id ?? "";
-  shipmentForm.vehicleId = vehiclesList.value[0]?.id ?? "";
-  shipmentForm.shipDate = new Date().toISOString().slice(0, 10);
-  shipmentForm.recipientName = "Budi Setiawan";
-  shipmentForm.recipientPhone = "0812-0000-1122";
-  shipmentForm.recipientAddress = "Jl. Soekarno Hatta No. 18, Bandung";
-  shipmentForm.note = "Menunggu pickup dari workshop.";
+  shipmentForm.customer = "";
+  shipmentForm.routeId = "";
+  shipmentForm.driverId = "";
+  shipmentForm.vehicleId = "";
+  shipmentForm.shipDate = "";
+  shipmentForm.recipientName = "";
+  shipmentForm.recipientPhone = "";
+  shipmentForm.recipientAddress = "";
+  shipmentForm.note = "";
   shipmentItems.value = [
-    { itemName: "Lemari 2 Pintu", quantity: 1, lengthCm: 200, widthCm: 90, heightCm: 200, volumeM3: 0, note: "Finishing doff" }
+    { itemName: "", quantity: 1, lengthCm: 0, widthCm: 0, heightCm: 0, volumeM3: 0, note: "" }
   ];
 }
 
@@ -821,7 +824,6 @@ async function handleSignOut() {
 onMounted(async () => {
   await initializeAuth();
   await initializeOpsStore();
-  if (!routeForm.vehicleId && vehiclesList.value[0]) routeForm.vehicleId = vehiclesList.value[0].id;
   resetShipmentForm();
 });
 </script>
