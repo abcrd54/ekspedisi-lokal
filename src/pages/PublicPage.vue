@@ -535,20 +535,20 @@ const historyTimeline = [
 ];
 
 const historyHero = computed(() => `url('${state.siteSettings.historyImage}')`);
-const fallbackShipment = {
+const emptyShipment = {
   trackingNumber: "-",
   customer: "-",
   item: "-",
   destination: "-",
-  status: "Belum ada data tracking",
+  status: "Data tracking belum tersedia",
   driverId: "",
   driverName: "-",
   vehicle: "-",
   eta: "-",
-  currentLocation: "Tol Kalikangkung KM 389",
-  currentLocationLabel: "Tol Kalikangkung KM 389",
+  currentLocation: "Belum ada lokasi driver",
+  currentLocationLabel: "Belum ada lokasi driver",
   mapLink: "https://maps.google.com",
-  mapNote: "Jalankan seed Supabase untuk memunculkan data tracking contoh.",
+  mapNote: "Data pengiriman akan muncul setelah shipment dan tracking driver tersimpan di Supabase.",
   isTracking: false,
   lastSeenAt: null,
   lastLatitude: null,
@@ -584,7 +584,7 @@ const result = reactive({
 });
 
 const trackingInput = ref("");
-const trackedShipment = computed(() => state.shipments.find((shipment) => shipment.trackingNumber === trackingInput.value) ?? state.shipments[0] ?? fallbackShipment);
+const trackedShipment = computed(() => state.shipments.find((shipment) => shipment.trackingNumber === trackingInput.value) ?? emptyShipment);
 const activeTestimonial = computed(() => testimonials.value[activeTestimonialIndex.value] ?? testimonials.value[0]);
 const mobileMenuOpen = ref(false);
 const mobileLinks = [

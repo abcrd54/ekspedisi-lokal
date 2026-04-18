@@ -115,7 +115,7 @@ const defaultSiteSettings: SiteSettings = {
 const state = reactive({
   initialized: false,
   loading: false,
-  source: isSupabaseConfigured ? "supabase" : "local",
+  source: isSupabaseConfigured ? "supabase" : "unconfigured",
   siteSettings: { ...defaultSiteSettings } as SiteSettings,
   routeRates: [] as RouteRate[],
   drivers: [] as DriverRecord[],
@@ -241,7 +241,7 @@ export async function initializeOpsStore(force = false) {
     try {
       await loadRemoteData();
     } catch {
-      state.source = "local";
+      state.source = "supabase-error";
     }
   }
 
@@ -254,7 +254,7 @@ export async function refreshOpsStore() {
   try {
     await loadRemoteData();
   } catch {
-    state.source = "local";
+    state.source = "supabase-error";
   }
 }
 
