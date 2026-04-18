@@ -11,7 +11,7 @@
       <aside class="panel-dark flex h-full flex-col p-5 text-white">
         <div class="rounded-[1.5rem] bg-gradient-to-br from-primary to-slate-800 p-5">
           <p class="text-sm uppercase tracking-[0.28em] text-blue-100">Admin Panel</p>
-          <h1 class="font-display mt-2 text-2xl font-bold">JeparaKirim Ops</h1>
+          <h1 class="font-display mt-2 text-2xl font-bold">{{ siteSettings.siteName }} Ops</h1>
           <p class="mt-3 text-sm leading-7 text-slate-300">Flow baru: rute, driver, armada, lalu shipment header dengan list barang.</p>
           <div class="mt-5 rounded-2xl bg-white/10 px-4 py-3 text-sm">
             Source data: <span class="font-bold">{{ opsState.source }}</span>
@@ -51,10 +51,47 @@
                 <Card class="panel p-6">
                   <p class="section-kicker">Setting Situs</p>
                   <div class="mt-6 grid gap-4">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <label class="grid gap-2 text-sm font-semibold">Nama Situs<input v-model="siteSettings.siteName" class="field" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Tagline Situs<input v-model="siteSettings.siteTagline" class="field" /></label>
+                    </div>
                     <label class="grid gap-2 text-sm font-semibold">Judul Hero<input v-model="siteSettings.heroTitle" class="field" /></label>
                     <label class="grid gap-2 text-sm font-semibold">Subheadline<input v-model="siteSettings.subheadline" class="field" /></label>
-                    <label class="grid gap-2 text-sm font-semibold">WhatsApp<input v-model="siteSettings.whatsapp" class="field" /></label>
-                    <label class="grid gap-2 text-sm font-semibold">CTA Utama<input v-model="siteSettings.primaryCta" class="field" /></label>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <label class="grid gap-2 text-sm font-semibold">Lokasi Kontak<input v-model="siteSettings.contactLocation" class="field" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">WhatsApp<input v-model="siteSettings.whatsapp" class="field" /></label>
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <label class="grid gap-2 text-sm font-semibold">Label CTA WhatsApp<input v-model="siteSettings.whatsappCtaLabel" class="field" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">CTA Utama<input v-model="siteSettings.primaryCta" class="field" /></label>
+                    </div>
+                    <div class="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-slate-600">
+                      Field yang paling aman diubah dari admin: branding, copy utama, kontak, dan URL gambar per section.
+                    </div>
+                    <Button class="w-full" @click="saveSettings">Simpan Setting</Button>
+                  </div>
+                </Card>
+
+                <Card class="panel p-6">
+                  <p class="section-kicker">Visual Situs</p>
+                  <div class="mt-6 grid gap-4">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <label class="grid gap-2 text-sm font-semibold">Hero Image 1<input v-model="siteSettings.heroImage1" class="field" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Hero Image 2<input v-model="siteSettings.heroImage2" class="field" /></label>
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <label class="grid gap-2 text-sm font-semibold">Hero Image 3<input v-model="siteSettings.heroImage3" class="field" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">History Image<input v-model="siteSettings.historyImage" class="field" /></label>
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <label class="grid gap-2 text-sm font-semibold">Why Packaging Image<input v-model="siteSettings.whyPackagingImage" class="field" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Why Delivery Image<input v-model="siteSettings.whyDeliveryImage" class="field" /></label>
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-3">
+                      <label class="grid gap-2 text-sm font-semibold">Testimonial Image 1<input v-model="siteSettings.testimonialImage1" class="field" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Testimonial Image 2<input v-model="siteSettings.testimonialImage2" class="field" /></label>
+                      <label class="grid gap-2 text-sm font-semibold">Testimonial Image 3<input v-model="siteSettings.testimonialImage3" class="field" /></label>
+                    </div>
                     <Button class="w-full" @click="saveSettings">Simpan Setting</Button>
                   </div>
                 </Card>

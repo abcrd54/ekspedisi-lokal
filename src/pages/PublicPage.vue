@@ -3,8 +3,8 @@
     <header class="sticky top-0 z-50 border-b border-white/40 glass">
       <div class="container flex items-center justify-between py-4">
         <div>
-          <RouterLink to="/" class="font-display text-xl font-bold text-primary">JeparaKirim</RouterLink>
-          <p class="text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground">Ekspedisi Furniture</p>
+          <RouterLink to="/" class="font-display text-xl font-bold text-primary">{{ state.siteSettings.siteName }}</RouterLink>
+          <p class="text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground">{{ state.siteSettings.siteTagline }}</p>
         </div>
 
         <nav class="hidden items-center gap-6 text-sm font-semibold text-slate-600 lg:flex">
@@ -58,7 +58,7 @@
       <div class="container relative flex min-h-[calc(100vh-84px)] items-center py-12 sm:py-16">
         <div class="grid w-full gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end lg:gap-10">
           <div class="max-w-3xl reveal-block is-visible">
-            <span class="badge-soft bg-white/10 text-blue-100">Ekspedisi Furniture Jepara</span>
+            <span class="badge-soft bg-white/10 text-blue-100">{{ state.siteSettings.siteTagline }}</span>
             <h1 class="editorial-title mt-6 text-[2.8rem] font-bold leading-[0.96] sm:text-6xl lg:text-7xl">
               {{ heroSlides[currentSlide].title }}
             </h1>
@@ -138,8 +138,8 @@
                 </label>
               </div>
               <div class="mt-6 flex flex-col gap-3 sm:flex-row">
-                <Button size="lg" @click="calculateShipping">Cek Ongkir</Button>
-                <Button as="a" :href="whatsAppLink" rel="noreferrer" target="_blank" size="lg" variant="ghost">Negosiasi via WhatsApp</Button>
+                <Button size="lg" @click="calculateShipping">{{ state.siteSettings.primaryCta }}</Button>
+                <Button as="a" :href="whatsAppLink" rel="noreferrer" target="_blank" size="lg" variant="ghost">{{ state.siteSettings.whatsappCtaLabel }}</Button>
               </div>
             </div>
 
@@ -452,10 +452,10 @@
       <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
       <div class="container grid gap-10 py-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
         <div>
-          <p class="text-sm font-bold uppercase tracking-[0.28em] text-blue-200">JeparaKirim</p>
-          <h3 class="mt-4 max-w-xl font-display text-3xl font-bold leading-tight">Ekspedisi furniture Jepara untuk pengiriman yang lebih jelas, rapi, dan mudah dipantau.</h3>
+          <p class="text-sm font-bold uppercase tracking-[0.28em] text-blue-200">{{ state.siteSettings.siteName }}</p>
+          <h3 class="mt-4 max-w-xl font-display text-3xl font-bold leading-tight">{{ state.siteSettings.heroTitle }}</h3>
           <p class="mt-4 max-w-xl text-sm leading-7 text-slate-300">
-            Cek ongkir, lacak pengiriman, dan lanjut negosiasi langsung lewat WhatsApp tanpa pindah alur.
+            {{ state.siteSettings.subheadline }}
           </p>
         </div>
         <div class="grid gap-6 sm:grid-cols-2">
@@ -471,7 +471,7 @@
           <div>
             <p class="text-sm font-bold uppercase tracking-[0.24em] text-slate-400">Kontak</p>
             <div class="mt-4 grid gap-3 text-sm text-slate-300">
-              <p>Jepara, Jawa Tengah</p>
+              <p>{{ state.siteSettings.contactLocation }}</p>
               <p>{{ state.siteSettings.whatsapp }}</p>
               <a :href="whatsAppLink" class="transition hover:text-white" rel="noreferrer" target="_blank">Buka WhatsApp</a>
             </div>
@@ -487,7 +487,7 @@
       class="fixed bottom-5 right-5 z-50 inline-flex items-center gap-3 rounded-full bg-emerald-500 px-5 py-4 text-sm font-bold text-white shadow-ambient transition hover:-translate-y-1"
     >
       <span class="h-3 w-3 rounded-full bg-white/90"></span>
-      WhatsApp Nego Harga
+      {{ state.siteSettings.whatsappCtaLabel }}
     </a>
   </div>
 </template>
@@ -505,8 +505,8 @@ const { state } = useOpsStore();
 
 const heroSlides = computed(() => [
   {
-    title: "Ekspedisi furniture Jepara yang rapi, jelas, dan enak dipakai dari awal.",
-    subtitle: "Cek ongkir, kirim barang, dan pantau posisi pengiriman dalam satu alur yang singkat.",
+    title: state.siteSettings.heroTitle,
+    subtitle: state.siteSettings.subheadline,
     background: `linear-gradient(120deg, rgba(15,23,42,0.2), rgba(15,23,42,0.15)), url('${state.siteSettings.heroImage1}')`
   },
   {
@@ -770,7 +770,7 @@ function setupScrollReveal() {
 const whatsAppLink = computed(() => {
   const phone = state.siteSettings.whatsapp.replace(/\D/g, "");
   const text = encodeURIComponent(
-    `Halo admin JeparaKirim, saya cek ongkir untuk ${form.itemType}, ukuran ${form.lengthCm}x${form.widthCm}x${form.heightCm} cm, qty ${form.quantity}, tujuan ${form.destinationCity}.`
+    `Halo admin ${state.siteSettings.siteName}, saya cek ongkir untuk ${form.itemType}, ukuran ${form.lengthCm}x${form.widthCm}x${form.heightCm} cm, qty ${form.quantity}, tujuan ${form.destinationCity}.`
   );
   return `https://wa.me/${phone}?text=${text}`;
 });

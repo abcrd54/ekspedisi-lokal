@@ -76,9 +76,13 @@ export type ShipmentRecord = {
 };
 
 type SiteSettings = {
+  siteName: string;
+  siteTagline: string;
   heroTitle: string;
   subheadline: string;
+  contactLocation: string;
   whatsapp: string;
+  whatsappCtaLabel: string;
   primaryCta: string;
   heroImage1: string;
   heroImage2: string;
@@ -160,9 +164,13 @@ type ShipmentItemRow = {
 };
 
 const defaultSiteSettings: SiteSettings = {
+  siteName: "JeparaKirim",
+  siteTagline: "Ekspedisi Furniture",
   heroTitle: "Ekspedisi Furniture Jepara ke Seluruh Indonesia",
   subheadline: "Cek ongkir cepat, booking rapi, tracking realtime.",
+  contactLocation: "Jepara, Jawa Tengah",
   whatsapp: "6281234567890",
+  whatsappCtaLabel: "WhatsApp Nego Harga",
   primaryCta: "Cek Ongkir",
   heroImage1: "/images/hero-main.svg",
   heroImage2: "/images/hero-route.svg",
@@ -297,10 +305,14 @@ function mapShipmentItemRow(item: ShipmentItemRow): ShipmentItemInput {
 function applySiteSettings(row: Record<string, unknown> | null) {
   if (!row) return;
 
-  state.siteSettings = {
+  Object.assign(state.siteSettings, {
+    siteName: (row.site_name as string | null) ?? defaultSiteSettings.siteName,
+    siteTagline: (row.site_tagline as string | null) ?? defaultSiteSettings.siteTagline,
     heroTitle: (row.hero_title as string | null) ?? defaultSiteSettings.heroTitle,
     subheadline: (row.subheadline as string | null) ?? defaultSiteSettings.subheadline,
+    contactLocation: (row.contact_location as string | null) ?? defaultSiteSettings.contactLocation,
     whatsapp: (row.whatsapp as string | null) ?? defaultSiteSettings.whatsapp,
+    whatsappCtaLabel: (row.whatsapp_cta_label as string | null) ?? defaultSiteSettings.whatsappCtaLabel,
     primaryCta: (row.primary_cta as string | null) ?? defaultSiteSettings.primaryCta,
     heroImage1: (row.hero_image_1 as string | null) ?? defaultSiteSettings.heroImage1,
     heroImage2: (row.hero_image_2 as string | null) ?? defaultSiteSettings.heroImage2,
@@ -311,7 +323,7 @@ function applySiteSettings(row: Record<string, unknown> | null) {
     testimonialImage2: (row.testimonial_image_2 as string | null) ?? defaultSiteSettings.testimonialImage2,
     testimonialImage3: (row.testimonial_image_3 as string | null) ?? defaultSiteSettings.testimonialImage3,
     historyImage: (row.history_image as string | null) ?? defaultSiteSettings.historyImage
-  };
+  });
 }
 
 async function loadPublicData() {
@@ -578,9 +590,13 @@ async function upsertSiteSettingsRemote(settings: SiteSettings) {
   if (!supabase || !isSupabaseConfigured) return;
   await supabase.from("site_settings").upsert({
     id: 1,
+    site_name: settings.siteName,
+    site_tagline: settings.siteTagline,
     hero_title: settings.heroTitle,
     subheadline: settings.subheadline,
+    contact_location: settings.contactLocation,
     whatsapp: settings.whatsapp,
+    whatsapp_cta_label: settings.whatsappCtaLabel,
     primary_cta: settings.primaryCta,
     hero_image_1: settings.heroImage1,
     hero_image_2: settings.heroImage2,
@@ -649,7 +665,7 @@ export function useOpsStore() {
   }
 
   async function saveSiteSettings(settings: SiteSettings) {
-    state.siteSettings = { ...settings };
+    Object.assign(state.siteSettings, settings);
     await upsertSiteSettingsRemote(settings);
   }
 
