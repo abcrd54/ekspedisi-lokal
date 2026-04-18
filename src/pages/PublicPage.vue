@@ -198,17 +198,21 @@
               <p class="section-kicker !text-slate-400">Tracking Barang</p>
               <h3 class="font-display mt-3 text-3xl font-bold">Masukkan nomor tracking</h3>
               <div class="mt-8 grid gap-4">
-                <input v-model="trackingInput" class="field border-white/10 bg-white/10 text-white placeholder:text-slate-400" placeholder="Contoh: JKR-240417-102" />
+                <input
+                  v-model="trackingInput"
+                  class="field border-white/10 bg-white/10 text-white placeholder:text-slate-400 focus:border-white/20 focus:bg-white/10 focus:text-white focus:ring-0"
+                  placeholder="Contoh: JKR-240417-102"
+                />
                 <Button class="w-full" size="lg" variant="secondary" @click="trackShipment">Lacak Barang</Button>
               </div>
               <div class="mt-8 grid gap-4 sm:grid-cols-2">
                 <div class="rounded-[1.5rem] bg-white/10 p-5">
                   <p class="text-sm text-slate-400">Status</p>
-                  <p class="mt-2 text-2xl font-extrabold text-emerald-300">{{ trackedShipment.status }}</p>
+                    <p class="mt-2 text-2xl font-extrabold text-emerald-300">{{ trackingCard.status }}</p>
                 </div>
                 <div class="rounded-[1.5rem] bg-white/10 p-5">
                   <p class="text-sm text-slate-400">Armada</p>
-                  <p class="mt-2 text-2xl font-extrabold text-blue-200">{{ trackedShipment.vehicle }}</p>
+                  <p class="mt-2 text-2xl font-extrabold text-blue-200">{{ trackingCard.vehicle }}</p>
                 </div>
               </div>
             </div>
@@ -217,19 +221,19 @@
               <div class="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
                 <div>
                   <p class="section-kicker">Detail Tracking</p>
-                  <h3 class="font-display mt-2 text-3xl font-bold">{{ trackedShipment.trackingNumber }}</h3>
+                  <h3 class="font-display mt-2 text-3xl font-bold">{{ trackingCard.trackingNumber }}</h3>
                   <div class="mt-6 grid gap-4">
                     <div class="rounded-[1.25rem] bg-slate-50 p-4">
                       <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Sopir</p>
-                      <p class="mt-2 text-lg font-bold">{{ trackedShipment.driverName }}</p>
+                      <p class="mt-2 text-lg font-bold">{{ trackingCard.driverName }}</p>
                     </div>
                     <div class="rounded-[1.25rem] bg-slate-50 p-4">
                       <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">ETA</p>
-                      <p class="mt-2 text-lg font-bold">{{ trackedShipment.eta }}</p>
+                      <p class="mt-2 text-lg font-bold">{{ trackingCard.eta }}</p>
                     </div>
                     <div class="rounded-[1.25rem] bg-slate-50 p-4">
                       <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Posisi Terakhir</p>
-                      <p class="mt-2 text-lg font-bold">{{ trackedShipment.currentLocation }}</p>
+                      <p class="mt-2 text-lg font-bold">{{ trackingCard.currentLocation }}</p>
                     </div>
                     <div class="rounded-[1.25rem] bg-slate-50 p-4">
                       <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Update Driver</p>
@@ -252,8 +256,8 @@
                   ></iframe>
                   <div class="px-5 py-4">
                     <div class="space-y-3">
-                      <p class="text-sm leading-6 text-muted-foreground">{{ trackedShipment.mapNote }}</p>
-                      <Button as="a" :href="trackedShipment.mapLink" class="w-full" rel="noreferrer" target="_blank" variant="secondary">Buka Google Maps</Button>
+                      <p class="text-sm leading-6 text-muted-foreground">{{ trackingCard.mapNote }}</p>
+                      <Button as="a" :href="trackingCard.mapLink" class="w-full" rel="noreferrer" target="_blank" variant="secondary">Buka Google Maps</Button>
                     </div>
                   </div>
                 </div>
@@ -537,18 +541,18 @@ const historyTimeline = [
 const historyHero = computed(() => `url('${state.siteSettings.historyImage}')`);
 const emptyShipment = {
   trackingNumber: "-",
-  customer: "-",
-  item: "-",
-  destination: "-",
-  status: "Data tracking belum tersedia",
+  customer: "Masukkan kode track",
+  item: "Masukkan kode track",
+  destination: "Masukkan kode track",
+  status: "Masukkan kode track",
   driverId: "",
-  driverName: "-",
-  vehicle: "-",
-  eta: "-",
-  currentLocation: "Belum ada lokasi driver",
-  currentLocationLabel: "Belum ada lokasi driver",
+  driverName: "Masukkan kode track",
+  vehicle: "Masukkan kode track",
+  eta: "Masukkan kode track",
+  currentLocation: "Masukkan kode track",
+  currentLocationLabel: "Masukkan kode track",
   mapLink: "https://maps.google.com",
-  mapNote: "Data pengiriman akan muncul setelah shipment dan tracking driver tersimpan di Supabase.",
+  mapNote: "Masukkan kode track untuk melihat status pengiriman dan posisi driver.",
   isTracking: false,
   lastSeenAt: null,
   lastLatitude: null,
@@ -584,7 +588,19 @@ const result = reactive({
 });
 
 const trackingInput = ref("");
-const trackedShipment = computed(() => state.shipments.find((shipment) => shipment.trackingNumber === trackingInput.value) ?? emptyShipment);
+const submittedTracking = ref("");
+const trackedShipment = computed(() =>
+  state.shipments.find((shipment) => shipment.trackingNumber.toLowerCase() === submittedTracking.value.toLowerCase()) ?? null
+);
+const trackingCard = computed(() => {
+  if (!submittedTracking.value.trim()) return emptyShipment;
+  return trackedShipment.value ?? {
+    ...emptyShipment,
+    trackingNumber: submittedTracking.value,
+    status: "Kode track tidak ditemukan",
+    mapNote: "Periksa kembali kode tracking atau pastikan data shipment sudah tersimpan di Supabase."
+  };
+});
 const activeTestimonial = computed(() => testimonials.value[activeTestimonialIndex.value] ?? testimonials.value[0]);
 const mobileMenuOpen = ref(false);
 const mobileLinks = [
@@ -597,20 +613,24 @@ const mobileLinks = [
 ];
 
 const embeddedMapUrl = computed(() => {
-  if (trackedShipment.value.lastLatitude != null && trackedShipment.value.lastLongitude != null) {
-    return `https://www.google.com/maps?q=${trackedShipment.value.lastLatitude},${trackedShipment.value.lastLongitude}&z=12&output=embed`;
+  if (trackingCard.value.lastLatitude != null && trackingCard.value.lastLongitude != null) {
+    return `https://www.google.com/maps?q=${trackingCard.value.lastLatitude},${trackingCard.value.lastLongitude}&z=12&output=embed`;
   }
 
-  const q = encodeURIComponent(trackedShipment.value?.currentLocation || "Jepara");
+  const q = encodeURIComponent(trackingCard.value.currentLocation || "Jepara");
   return `https://www.google.com/maps?q=${q}&z=12&output=embed`;
 });
 
 const trackingFreshness = computed(() => {
-  if (!trackedShipment.value.lastSeenAt) {
-    return trackedShipment.value.isTracking ? "Tracking aktif, menunggu titik pertama" : "Tracking belum aktif";
+  if (!submittedTracking.value.trim()) {
+    return "Masukkan kode track";
   }
 
-  const diffMs = Date.now() - new Date(trackedShipment.value.lastSeenAt).getTime();
+  if (!trackingCard.value.lastSeenAt) {
+    return trackingCard.value.isTracking ? "Tracking aktif, menunggu titik pertama" : "Masukkan kode track";
+  }
+
+  const diffMs = Date.now() - new Date(trackingCard.value.lastSeenAt).getTime();
   const diffMinutes = Math.max(0, Math.round(diffMs / 60000));
 
   if (diffMinutes < 1) return "Baru saja diperbarui";
@@ -650,7 +670,7 @@ function calculateShipping() {
 }
 
 function trackShipment() {
-  trackingInput.value = trackingInput.value.trim();
+  submittedTracking.value = trackingInput.value.trim();
 }
 
 function startTrackingRefresh() {
@@ -719,8 +739,9 @@ watch(availableDestinations, (destinations) => {
 watch(
   () => state.shipments,
   (shipments) => {
-    if (shipments.length && !trackingInput.value) {
-      trackingInput.value = shipments[0].trackingNumber;
+    if (submittedTracking.value) {
+      const matchedShipment = shipments.find((shipment) => shipment.trackingNumber.toLowerCase() === submittedTracking.value.toLowerCase());
+      if (!matchedShipment) return;
     }
   },
   { deep: true }
