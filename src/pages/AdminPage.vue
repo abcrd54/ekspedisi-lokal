@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="min-h-screen bg-slate-950 p-4 sm:p-5">
     <div v-if="!authState.initialized || opsState.loading" class="panel-dark flex min-h-[calc(100vh-2rem)] items-center justify-center text-white">
       <div class="text-center">
@@ -320,6 +320,7 @@
                       Password Login App Driver
                       <input v-model="driverForm.password" class="field" placeholder="Isi saat buat baru atau reset password" type="password" />
                     </label>
+                    <p class="text-sm leading-7 text-muted-foreground">Password hanya dipakai untuk mengisi <code>password_input</code>. Database akan hash otomatis ke <code>password_hash</code>.</p>
                     <div class="grid gap-3 sm:grid-cols-2">
                       <Button class="w-full" variant="secondary" @click="saveDriver">{{ editingDriverId ? "Update Driver" : "Input Driver" }}</Button>
                       <Button v-if="editingDriverId" class="w-full" variant="ghost" @click="resetDriverForm">Batal Edit</Button>
@@ -377,15 +378,12 @@
                 <Card class="panel p-6">
                   <p class="section-kicker">Input Pengiriman</p>
                   <div class="mt-6 grid gap-4">
-                    <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="grid gap-4">
                       <label class="grid gap-2 text-sm font-semibold">
                         Nama Customer
                         <input v-model="shipmentForm.customer" class="field" />
                       </label>
-                      <label class="grid gap-2 text-sm font-semibold">
-                        Nomor WhatsApp
-                        <input v-model="shipmentForm.phone" class="field" />
-                      </label>
+                      <p class="text-sm leading-7 text-muted-foreground">Nomor WhatsApp customer tidak disimpan di tabel <code>shipments</code>. Form ini hanya memakai field yang memang ada di schema.</p>
                     </div>
                     <div class="grid gap-4 sm:grid-cols-2">
                       <label class="grid gap-2 text-sm font-semibold">
@@ -431,6 +429,7 @@
                       Catatan
                       <textarea v-model="shipmentForm.note" class="field-textarea" rows="4"></textarea>
                     </label>
+                    <p class="text-sm leading-7 text-muted-foreground">Lokasi live tidak diinput dari admin. Halaman tracking akan memakai koordinat terakhir dari tabel <code>drivers</code>.</p>
                   </div>
                 </Card>
 
@@ -745,7 +744,7 @@ const shipmentPreview = computed(() => {
     price: route ? formatCurrency(route.flatPrice * multiplier) : "-",
     volume: `${volume.toFixed(2)} m3`,
     status: route ? (multiplier > 1 ? `${multiplier}x tarif flat` : "Masuk tarif flat") : "-",
-    routeDriver: route && selectedDriver.value ? `${route.origin} -> ${route.destination} · ${selectedDriver.value.name}` : "-"
+    routeDriver: route && selectedDriver.value ? `${route.origin} -> ${route.destination} | ${selectedDriver.value.name}` : "-"
   };
 });
 
@@ -903,7 +902,7 @@ async function createShipment() {
   await saveShipment({
     trackingNumber: `JKR-${stamp}-${serial}`,
     customer: shipmentForm.customer,
-    item: `${shipmentForm.itemType} · ${shipmentForm.lengthCm}x${shipmentForm.widthCm}x${shipmentForm.heightCm} cm · qty ${shipmentForm.quantity}`,
+    item: `${shipmentForm.itemType} | ${shipmentForm.lengthCm}x${shipmentForm.widthCm}x${shipmentForm.heightCm} cm | qty ${shipmentForm.quantity}`,
     destination: `${route.origin} -> ${route.destination}`,
     status: "Pickup Dijadwalkan",
     driverId: driver.id,
@@ -926,6 +925,14 @@ async function createShipment() {
     password: ""
   });
 
+  shipmentForm.customer = "CV Mebel Nusantara";
+  shipmentForm.itemType = "Lemari";
+  shipmentForm.destination = destinationOptions.value[0] ?? "Bandung";
+  shipmentForm.lengthCm = 200;
+  shipmentForm.widthCm = 90;
+  shipmentForm.heightCm = 200;
+  shipmentForm.quantity = 2;
+  shipmentForm.note = "Menunggu pickup dari workshop.";
   active.value = "shipments";
 }
 
@@ -943,3 +950,4 @@ onMounted(async () => {
   if (!shipmentForm.driverId && driversList.value[0]) shipmentForm.driverId = driversList.value[0].id;
 });
 </script>
+

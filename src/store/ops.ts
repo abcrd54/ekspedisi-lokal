@@ -1,4 +1,4 @@
-import { computed, reactive } from "vue";
+﻿import { computed, reactive } from "vue";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 
 export type RouteRate = {
@@ -118,6 +118,11 @@ const state = reactive({
   drivers: [] as DriverRecord[],
   shipments: [] as ShipmentRecord[]
 });
+
+function compactText(value: string | null | undefined, fallback = "-") {
+  const normalized = value?.trim();
+  return normalized ? normalized : fallback;
+}
 
 function formatDriverLocation(driver?: Partial<DriverRecord> | null, fallback?: string | null) {
   if (driver?.lastLatitude != null && driver.lastLongitude != null) {
@@ -275,13 +280,13 @@ async function upsertDriverRemote(driver: DriverRecord) {
   if (!supabase || !isSupabaseConfigured) return;
 
   const payload: Record<string, unknown> = {
-    id: driver.id,
-    name: driver.name,
-    phone: driver.phone,
-    status: driver.status,
-    primary_vehicle: driver.primaryVehicle,
-    active_trips: driver.activeTrips,
-    route: driver.route,
+    id: compactText(driver.id, driver.id),
+    name: compactText(driver.name, "Driver Baru"),
+    phone: compactText(driver.phone, "-"),
+    status: compactText(driver.status, "Standby"),
+    primary_vehicle: compactText(driver.primaryVehicle, "-"),
+    active_trips: Math.max(0, driver.activeTrips),
+    route: compactText(driver.route, "-"),
     is_tracking: driver.isTracking,
     last_seen_at: driver.lastSeenAt,
     last_latitude: driver.lastLatitude,
@@ -304,17 +309,17 @@ async function deleteDriverRemote(id: string) {
 async function insertShipmentRemote(shipment: ShipmentRecord) {
   if (!supabase || !isSupabaseConfigured) return;
   await supabase.from("shipments").insert({
-    tracking_number: shipment.trackingNumber,
-    customer: shipment.customer,
-    item: shipment.item,
-    destination: shipment.destination,
-    status: shipment.status,
-    driver_id: shipment.driverId,
-    driver: shipment.driverName,
-    vehicle: shipment.vehicle,
-    eta: shipment.eta,
-    current_location_label: shipment.currentLocationLabel,
-    map_note: shipment.mapNote
+    tracking_number: compactText(shipment.trackingNumber, shipment.trackingNumber),
+    customer: compactText(shipment.customer, "-"),
+    item: compactText(shipment.item, "-"),
+    destination: compactText(shipment.destination, "-"),
+    status: compactText(shipment.status, "Pickup Dijadwalkan"),
+    driver_id: shipment.driverId || null,
+    driver: compactText(shipment.driverName, "Belum ditentukan"),
+    vehicle: compactText(shipment.vehicle, "-"),
+    eta: compactText(shipment.eta, "-"),
+    current_location_label: compactText(shipment.currentLocationLabel, "Menunggu pickup driver"),
+    map_note: compactText(shipment.mapNote, "Menunggu titik lokasi pertama dari aplikasi driver.")
   });
 }
 
@@ -366,6 +371,7 @@ export function useOpsStore() {
   async function deleteDriver(id: string) {
     state.drivers = state.drivers.filter((entry) => entry.id !== id) as typeof state.drivers;
     await deleteDriverRemote(id);
+    await refreshOpsStore();
   }
 
   async function saveShipment(shipment: ShipmentRecord) {
@@ -391,3 +397,4 @@ export function useOpsStore() {
     saveSiteSettings
   };
 }
+
