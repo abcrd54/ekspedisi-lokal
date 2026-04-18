@@ -128,6 +128,7 @@ type RouteRateRow = {
   max_volume_m3: number;
   eta: string;
   vehicle_id: string | null;
+  vehicle: string | null;
   vehicle_name: string | null;
   note: string | null;
 };
@@ -237,6 +238,7 @@ function mapDriverRow(driver: DriverRow): DriverRecord {
 
 function mapRouteRow(route: RouteRateRow, vehicleMap: Map<string, VehicleRecord>): RouteRate {
   const mappedVehicle = route.vehicle_id ? vehicleMap.get(String(route.vehicle_id)) : undefined;
+  const resolvedVehicleName = compactText(route.vehicle_name, compactText(route.vehicle, mappedVehicle?.name ?? "Armada belum dipilih"));
   return {
     id: String(route.id),
     origin: compactText(route.origin, "-"),
@@ -246,7 +248,7 @@ function mapRouteRow(route: RouteRateRow, vehicleMap: Map<string, VehicleRecord>
     maxVolumeM3: Number(route.max_volume_m3 ?? 0),
     eta: compactText(route.eta, "-"),
     vehicleId: route.vehicle_id ? String(route.vehicle_id) : mappedVehicle?.id ?? "",
-    vehicle: compactText(route.vehicle_name, mappedVehicle?.name ?? "Armada belum dipilih"),
+    vehicle: resolvedVehicleName,
     note: String(route.note ?? "")
   };
 }
@@ -507,6 +509,7 @@ async function upsertRouteRateRemote(route: RouteRate) {
     max_volume_m3: route.maxVolumeM3,
     eta: route.eta,
     vehicle_id: route.vehicleId || null,
+    vehicle: route.vehicle,
     vehicle_name: route.vehicle,
     note: route.note
   });
