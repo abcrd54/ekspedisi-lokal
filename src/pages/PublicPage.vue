@@ -221,7 +221,7 @@
                   <div class="mt-6 grid gap-4">
                     <div class="rounded-[1.25rem] bg-slate-50 p-4">
                       <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Sopir</p>
-                      <p class="mt-2 text-lg font-bold">{{ trackedShipment.driver }}</p>
+                      <p class="mt-2 text-lg font-bold">{{ trackedShipment.driverName }}</p>
                     </div>
                     <div class="rounded-[1.25rem] bg-slate-50 p-4">
                       <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">ETA</p>
@@ -230,6 +230,10 @@
                     <div class="rounded-[1.25rem] bg-slate-50 p-4">
                       <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Posisi Terakhir</p>
                       <p class="mt-2 text-lg font-bold">{{ trackedShipment.currentLocation }}</p>
+                    </div>
+                    <div class="rounded-[1.25rem] bg-slate-50 p-4">
+                      <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Update Driver</p>
+                      <p class="mt-2 text-lg font-bold">{{ trackingFreshness }}</p>
                     </div>
                   </div>
                 </div>
@@ -247,7 +251,10 @@
                     title="Realtime Maps"
                   ></iframe>
                   <div class="px-5 py-4">
-                    <Button as="a" :href="trackedShipment.mapLink" class="w-full" rel="noreferrer" target="_blank" variant="secondary">Buka Google Maps</Button>
+                    <div class="space-y-3">
+                      <p class="text-sm leading-6 text-muted-foreground">{{ trackedShipment.mapNote }}</p>
+                      <Button as="a" :href="trackedShipment.mapLink" class="w-full" rel="noreferrer" target="_blank" variant="secondary">Buka Google Maps</Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -472,7 +479,7 @@ import Button from "@/components/ui/Button.vue";
 import Card from "@/components/ui/Card.vue";
 import { itemTypes } from "@/data/catalog";
 import { formatCurrency } from "@/lib/utils";
-import { initializeOpsStore, useOpsStore } from "@/store/ops";
+import { initializeOpsStore, refreshOpsStore, useOpsStore } from "@/store/ops";
 
 const { state } = useOpsStore();
 
@@ -534,12 +541,18 @@ const fallbackShipment = {
   item: "-",
   destination: "-",
   status: "Belum ada data tracking",
-  driver: "-",
+  driverId: "",
+  driverName: "-",
   vehicle: "-",
   eta: "-",
   currentLocation: "Tol Kalikangkung KM 389",
+  currentLocationLabel: "Tol Kalikangkung KM 389",
   mapLink: "https://maps.google.com",
-  mapNote: "Jalankan seed Supabase untuk memunculkan data tracking contoh."
+  mapNote: "Jalankan seed Supabase untuk memunculkan data tracking contoh.",
+  isTracking: false,
+  lastSeenAt: null,
+  lastLatitude: null,
+  lastLongitude: null
 };
 
 const currentSlide = ref(0);
@@ -547,6 +560,7 @@ const activeTestimonialIndex = ref(0);
 let sliderTimer: number | undefined;
 let testimonialTimer: number | undefined;
 let revealObserver: IntersectionObserver | undefined;
+let trackingTimer: number | undefined;
 
 const availableDestinations = computed(() => [...new Set(state.routeRates.map((route) => route.destination))]);
 
@@ -583,8 +597,26 @@ const mobileLinks = [
 ];
 
 const embeddedMapUrl = computed(() => {
+  if (trackedShipment.value.lastLatitude != null && trackedShipment.value.lastLongitude != null) {
+    return `https://www.google.com/maps?q=${trackedShipment.value.lastLatitude},${trackedShipment.value.lastLongitude}&z=12&output=embed`;
+  }
+
   const q = encodeURIComponent(trackedShipment.value?.currentLocation || "Jepara");
   return `https://www.google.com/maps?q=${q}&z=12&output=embed`;
+});
+
+const trackingFreshness = computed(() => {
+  if (!trackedShipment.value.lastSeenAt) {
+    return trackedShipment.value.isTracking ? "Tracking aktif, menunggu titik pertama" : "Tracking belum aktif";
+  }
+
+  const diffMs = Date.now() - new Date(trackedShipment.value.lastSeenAt).getTime();
+  const diffMinutes = Math.max(0, Math.round(diffMs / 60000));
+
+  if (diffMinutes < 1) return "Baru saja diperbarui";
+  if (diffMinutes === 1) return "Diperbarui 1 menit lalu";
+  if (diffMinutes <= 15) return `Diperbarui ${diffMinutes} menit lalu`;
+  return `Lokasi terakhir ${diffMinutes} menit lalu`;
 });
 
 function calculateShipping() {
@@ -619,6 +651,12 @@ function calculateShipping() {
 
 function trackShipment() {
   trackingInput.value = trackingInput.value.trim();
+}
+
+function startTrackingRefresh() {
+  trackingTimer = window.setInterval(async () => {
+    await refreshOpsStore();
+  }, 15000);
 }
 
 function nextTestimonial() {
@@ -696,12 +734,14 @@ onMounted(async () => {
   calculateShipping();
   startSlider();
   startTestimonialSlider();
+  startTrackingRefresh();
   setupScrollReveal();
 });
 
 onBeforeUnmount(() => {
   if (sliderTimer) window.clearInterval(sliderTimer);
   if (testimonialTimer) window.clearInterval(testimonialTimer);
+  if (trackingTimer) window.clearInterval(trackingTimer);
   revealObserver?.disconnect();
 });
 </script>

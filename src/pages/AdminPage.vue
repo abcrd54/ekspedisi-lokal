@@ -316,6 +316,10 @@
                         <input v-model="driverForm.route" class="field" />
                       </label>
                     </div>
+                    <label class="grid gap-2 text-sm font-semibold">
+                      Password Login App Driver
+                      <input v-model="driverForm.password" class="field" placeholder="Isi saat buat baru atau reset password" type="password" />
+                    </label>
                     <div class="grid gap-3 sm:grid-cols-2">
                       <Button class="w-full" variant="secondary" @click="saveDriver">{{ editingDriverId ? "Update Driver" : "Input Driver" }}</Button>
                       <Button v-if="editingDriverId" class="w-full" variant="ghost" @click="resetDriverForm">Batal Edit</Button>
@@ -487,7 +491,7 @@
                         <option value="trackingNumber">Sort: Tracking</option>
                         <option value="customer">Sort: Customer</option>
                         <option value="destination">Sort: Rute</option>
-                        <option value="driver">Sort: Sopir</option>
+                        <option value="driverName">Sort: Sopir</option>
                         <option value="status">Sort: Status</option>
                       </select>
                       <select v-model="shipmentSortOrder" class="field">
@@ -514,7 +518,7 @@
                           <td class="px-6 py-4">{{ shipment.customer }}</td>
                           <td class="px-6 py-4">{{ shipment.item }}</td>
                           <td class="px-6 py-4">{{ shipment.destination }}</td>
-                          <td class="px-6 py-4">{{ shipment.driver }}</td>
+                          <td class="px-6 py-4">{{ shipment.driverName }}</td>
                           <td class="px-6 py-4">
                             <span class="badge-soft" :class="statusClass(shipment.status)">{{ shipment.status }}</span>
                           </td>
@@ -598,7 +602,7 @@ const routeSortKey = ref<"destination" | "itemType" | "flatPrice" | "maxVolumeM3
 const routeSortOrder = ref<"asc" | "desc">("asc");
 const driverSortKey = ref<"name" | "status" | "activeTrips" | "primaryVehicle">("name");
 const driverSortOrder = ref<"asc" | "desc">("asc");
-const shipmentSortKey = ref<"trackingNumber" | "customer" | "destination" | "driver" | "status">("trackingNumber");
+const shipmentSortKey = ref<"trackingNumber" | "customer" | "destination" | "driverName" | "status">("trackingNumber");
 const shipmentSortOrder = ref<"asc" | "desc">("desc");
 const routePage = ref(1);
 const driverPage = ref(1);
@@ -628,7 +632,8 @@ const driverForm = reactive({
   status: "On Duty",
   primaryVehicle: "Box Besar",
   activeTrips: 2,
-  route: "Bandung - Jakarta"
+  route: "Bandung - Jakarta",
+  password: ""
 });
 
 const shipmentForm = reactive({
@@ -654,12 +659,15 @@ const activeHeader = computed(() => {
   return { eyebrow: "Operasional", title: "Laporan ringkas" };
 });
 
-function sortList<T extends Record<string, string | number>>(items: T[], key: keyof T, order: "asc" | "desc") {
+function sortList<T extends Record<string, string | number | boolean | null | undefined>>(items: T[], key: keyof T, order: "asc" | "desc") {
   return [...items].sort((a, b) => {
     const aValue = a[key];
     const bValue = b[key];
     if (typeof aValue === "number" && typeof bValue === "number") {
       return order === "asc" ? aValue - bValue : bValue - aValue;
+    }
+    if (typeof aValue === "boolean" && typeof bValue === "boolean") {
+      return order === "asc" ? Number(aValue) - Number(bValue) : Number(bValue) - Number(aValue);
     }
     return order === "asc" ? String(aValue).localeCompare(String(bValue)) : String(bValue).localeCompare(String(aValue));
   });
@@ -682,7 +690,11 @@ const filteredDrivers = computed(() => {
   const query = driverSearch.value.trim().toLowerCase();
   const filtered = !query
     ? driversList.value
-    : driversList.value.filter((driver) => [driver.name, driver.phone, driver.primaryVehicle, driver.route, driver.status].some((value) => value.toLowerCase().includes(query)));
+    : driversList.value.filter((driver) =>
+        [driver.name, driver.phone, driver.primaryVehicle, driver.route, driver.status].some((value) =>
+          String(value ?? "").toLowerCase().includes(query)
+        )
+      );
   return sortList(filtered, driverSortKey.value, driverSortOrder.value);
 });
 
@@ -691,7 +703,9 @@ const filteredShipments = computed(() => {
   const filtered = !query
     ? shipmentsList.value
     : shipmentsList.value.filter((shipment) =>
-        [shipment.trackingNumber, shipment.customer, shipment.item, shipment.destination, shipment.driver, shipment.status].some((value) => value.toLowerCase().includes(query))
+        [shipment.trackingNumber, shipment.customer, shipment.item, shipment.destination, shipment.driverName, shipment.status].some((value) =>
+          String(value ?? "").toLowerCase().includes(query)
+        )
       );
   return sortList(filtered, shipmentSortKey.value, shipmentSortOrder.value);
 });
@@ -829,6 +843,7 @@ function resetDriverForm() {
   driverForm.primaryVehicle = "Box Besar";
   driverForm.activeTrips = 2;
   driverForm.route = "Bandung - Jakarta";
+  driverForm.password = "";
 }
 
 function editDriver(id: string) {
@@ -841,9 +856,14 @@ function editDriver(id: string) {
   driverForm.primaryVehicle = driver.primaryVehicle;
   driverForm.activeTrips = driver.activeTrips;
   driverForm.route = driver.route;
+  driverForm.password = "";
 }
 
 async function saveDriver() {
+  const existingDriver = editingDriverId.value
+    ? driversList.value.find((entry) => entry.id === editingDriverId.value)
+    : undefined;
+
   const payload: DriverRecord = {
     id: editingDriverId.value ?? makeId("driver"),
     name: driverForm.name,
@@ -851,7 +871,13 @@ async function saveDriver() {
     status: driverForm.status,
     primaryVehicle: driverForm.primaryVehicle,
     activeTrips: driverForm.activeTrips,
-    route: driverForm.route
+    route: driverForm.route,
+    isTracking: existingDriver?.isTracking ?? false,
+    lastSeenAt: existingDriver?.lastSeenAt ?? null,
+    lastLatitude: existingDriver?.lastLatitude ?? null,
+    lastLongitude: existingDriver?.lastLongitude ?? null,
+    lastAccuracy: existingDriver?.lastAccuracy ?? null,
+    password: driverForm.password
   };
   await persistDriver(payload);
   resetDriverForm();
@@ -885,18 +911,25 @@ async function createShipment() {
     item: `${shipmentForm.itemType} · ${shipmentForm.lengthCm}x${shipmentForm.widthCm}x${shipmentForm.heightCm} cm · qty ${shipmentForm.quantity}`,
     destination: `${route.origin} -> ${route.destination}`,
     status: "Pickup Dijadwalkan",
-    driver: driver.name,
+    driverId: driver.id,
+    driverName: driver.name,
     vehicle: route.vehicle,
     eta: route.eta,
     currentLocation: route.origin,
+    currentLocationLabel: route.origin,
     mapLink: shipmentForm.mapLink,
-    mapNote: multiplier > 1 ? `Melebihi batas flat ${route.maxVolumeM3} m3, dihitung ${multiplier}x tarif flat.` : shipmentForm.note
+    mapNote: multiplier > 1 ? `Melebihi batas flat ${route.maxVolumeM3} m3, dihitung ${multiplier}x tarif flat.` : shipmentForm.note,
+    isTracking: driver.isTracking,
+    lastSeenAt: driver.lastSeenAt,
+    lastLatitude: driver.lastLatitude,
+    lastLongitude: driver.lastLongitude
   });
 
   await persistDriver({
     ...driver,
     activeTrips: driver.activeTrips + 1,
-    status: "On Duty"
+    status: "On Duty",
+    password: ""
   });
 
   active.value = "shipments";
