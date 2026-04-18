@@ -257,7 +257,7 @@
                   <div class="px-5 py-4">
                     <div class="space-y-3">
                       <p class="text-sm leading-6 text-muted-foreground">{{ trackingCard.mapNote }}</p>
-                      <Button as="a" :href="trackingCard.mapLink" class="w-full" rel="noreferrer" target="_blank" variant="secondary">Buka Google Maps</Button>
+                      <Button as="a" :href="liveMapLink" class="w-full" rel="noreferrer" target="_blank" variant="secondary">Buka Google Maps</Button>
                     </div>
                   </div>
                 </div>
@@ -551,7 +551,6 @@ const emptyShipment = {
   eta: "Masukkan kode track",
   currentLocation: "Masukkan kode track",
   currentLocationLabel: "Masukkan kode track",
-  mapLink: "https://maps.google.com",
   mapNote: "Masukkan kode track untuk melihat status pengiriman dan posisi driver.",
   isTracking: false,
   lastSeenAt: null,
@@ -619,6 +618,15 @@ const embeddedMapUrl = computed(() => {
 
   const q = encodeURIComponent(trackingCard.value.currentLocation || "Jepara");
   return `https://www.google.com/maps?q=${q}&z=12&output=embed`;
+});
+
+const liveMapLink = computed(() => {
+  if (trackingCard.value.lastLatitude != null && trackingCard.value.lastLongitude != null) {
+    return `https://www.google.com/maps?q=${trackingCard.value.lastLatitude},${trackingCard.value.lastLongitude}`;
+  }
+
+  const q = encodeURIComponent(trackingCard.value.currentLocation || "Jepara");
+  return `https://www.google.com/maps?q=${q}`;
 });
 
 const trackingFreshness = computed(() => {

@@ -426,10 +426,6 @@
                           <option v-for="driver in driversList" :key="driver.id" :value="driver.id">{{ driver.name }}</option>
                         </select>
                       </label>
-                      <label class="grid gap-2 text-sm font-semibold">
-                        Link Maps
-                        <input v-model="shipmentForm.mapLink" class="field" />
-                      </label>
                     </div>
                     <label class="grid gap-2 text-sm font-semibold">
                       Catatan
@@ -646,7 +642,6 @@ const shipmentForm = reactive({
   heightCm: 200,
   quantity: 2,
   driverId: "",
-  mapLink: "https://maps.google.com",
   note: "Menunggu pickup dari workshop."
 });
 
@@ -917,7 +912,6 @@ async function createShipment() {
     eta: route.eta,
     currentLocation: route.origin,
     currentLocationLabel: route.origin,
-    mapLink: shipmentForm.mapLink,
     mapNote: multiplier > 1 ? `Melebihi batas flat ${route.maxVolumeM3} m3, dihitung ${multiplier}x tarif flat.` : shipmentForm.note,
     isTracking: driver.isTracking,
     lastSeenAt: driver.lastSeenAt,

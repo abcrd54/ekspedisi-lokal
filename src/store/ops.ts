@@ -41,7 +41,6 @@ export type ShipmentRecord = {
   eta: string;
   currentLocation: string;
   currentLocationLabel: string;
-  mapLink: string;
   mapNote: string;
   isTracking: boolean;
   lastSeenAt: string | null;
@@ -90,9 +89,7 @@ type ShipmentRow = {
   driver: string | null;
   vehicle: string | null;
   eta: string | null;
-  current_location: string | null;
   current_location_label: string | null;
-  map_link: string | null;
   map_note: string | null;
 };
 
@@ -130,14 +127,6 @@ function formatDriverLocation(driver?: Partial<DriverRecord> | null, fallback?: 
   return fallback?.trim() || "Menunggu update lokasi driver";
 }
 
-function buildMapLink(latitude?: number | null, longitude?: number | null, fallback?: string | null) {
-  if (latitude != null && longitude != null) {
-    return `https://www.google.com/maps?q=${latitude},${longitude}`;
-  }
-
-  return fallback?.trim() || "https://maps.google.com";
-}
-
 function mapDriverRow(driver: DriverRow): DriverRecord {
   return {
     id: String(driver.id),
@@ -158,7 +147,10 @@ function mapDriverRow(driver: DriverRow): DriverRecord {
 function mapShipmentRow(shipment: ShipmentRow, driverMap: Map<string, DriverRecord>): ShipmentRecord {
   const driver = shipment.driver_id ? driverMap.get(String(shipment.driver_id)) : undefined;
   const vehicle = shipment.vehicle ?? driver?.primaryVehicle ?? "-";
-  const currentLocation = formatDriverLocation(driver, shipment.current_location_label ?? shipment.current_location);
+  const currentLocation = driver?.lastLatitude != null && driver.lastLongitude != null
+    ? formatDriverLocation(driver, shipment.current_location_label)
+    : shipment.current_location_label?.trim()
+        || "Driver belum mengirim lokasi";
 
   return {
     trackingNumber: shipment.tracking_number,
@@ -171,9 +163,10 @@ function mapShipmentRow(shipment: ShipmentRow, driverMap: Map<string, DriverReco
     vehicle,
     eta: shipment.eta ?? "-",
     currentLocation,
-    currentLocationLabel: shipment.current_location_label?.trim() || shipment.current_location?.trim() || currentLocation,
-    mapLink: buildMapLink(driver?.lastLatitude, driver?.lastLongitude, shipment.map_link),
-    mapNote: shipment.map_note ?? "Tracking live mengikuti posisi terakhir driver.",
+    currentLocationLabel: shipment.current_location_label?.trim() || currentLocation,
+    mapNote: driver?.lastLatitude != null && driver.lastLongitude != null
+      ? "Posisi live diambil dari aplikasi driver."
+      : (shipment.map_note ?? "Menunggu titik lokasi pertama dari aplikasi driver."),
     isTracking: driver?.isTracking ?? false,
     lastSeenAt: driver?.lastSeenAt ?? null,
     lastLatitude: driver?.lastLatitude ?? null,
@@ -320,9 +313,7 @@ async function insertShipmentRemote(shipment: ShipmentRecord) {
     driver: shipment.driverName,
     vehicle: shipment.vehicle,
     eta: shipment.eta,
-    current_location: shipment.currentLocation,
     current_location_label: shipment.currentLocationLabel,
-    map_link: shipment.mapLink,
     map_note: shipment.mapNote
   });
 }
